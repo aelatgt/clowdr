@@ -22,6 +22,8 @@ services:
     image: hasura/graphql-engine:latest.cli-migrations-v2
     ports:
       - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - "postgres"
     restart: always
@@ -41,5 +43,6 @@ services:
       EVENT_SECRET: ${EVENT_SECRET}
       HASURA_GRAPHQL_METADATA_DIR: /hasura-metadata
       HASURA_GRAPHQL_MIGRATIONS_DIR: /hasura-migrations
+
 volumes:
   db_data:
