@@ -108,6 +108,13 @@ dist
 
 # TernJS port file
 .tern-port
+./scripts
+
+/hasura/.env.prod
+
+./scripts
+
+/hasura/.env.prod
 
 # Windows
 desktop.ini

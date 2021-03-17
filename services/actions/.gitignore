@@ -3,3 +3,5 @@ build
 generated/
 
 graphql.schema.json
+
+.env-prod
