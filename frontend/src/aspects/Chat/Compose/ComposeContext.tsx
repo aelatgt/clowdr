@@ -1,9 +1,7 @@
 import assert from "assert";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Chat_MessageType_Enum } from "../../../generated/graphql";
-import { useRealTime } from "../../Generic/useRealTime";
 import { ChatConfiguration, useChatConfiguration } from "../Configuration";
-import { useSelectedChat } from "../SelectedChat";
 import type { MinMax } from "../Types/Base";
 import type { AnswerMessageData, MessageData, OrdinaryMessageData } from "../Types/Messages";
 import { useSendMessageQueries } from "./SendMessageQueries";
@@ -26,7 +24,6 @@ interface ComposeCtx {
     isSending: boolean;
     sendError: string | undefined;
     send: (data?: MessageData) => void;
-    clearSendError: () => void;
 
     setAnsweringQuestionId: (ids: number[] | null) => void;
 }
@@ -73,11 +70,8 @@ export function ComposeContextProvider({
     const [newMessageType, setNewMessageType] = useState<Chat_MessageType_Enum>(defaultType);
     const [newMessageData, setNewMessageData] = useState<MessageData>({});
     const [lastSendTime, setLastSendTime] = useState<number>(0);
-    const [isSending, setIsSending] = useState<boolean>(false);
-    const [sendError, setSendError] = useState<string | null>(null);
-    const now = useRealTime(250);
+    // const now = useRealTime(250);
     const sendQueries = useSendMessageQueries();
-    const selectedChat = useSelectedChat();
 
     const minLength =
         useMemo(() => {
@@ -122,27 +116,27 @@ export function ComposeContextProvider({
         config.questionConfig.length?.max,
     ]);
 
-    const lockoutTimeMs = useMemo(() => {
-        switch (newMessageType) {
-            case Chat_MessageType_Enum.Message:
-                return config.messageConfig.sendCooloffPeriodMs;
-            case Chat_MessageType_Enum.Emote:
-                return config.emoteConfig.sendCooloffPeriodMs;
-            case Chat_MessageType_Enum.Question:
-                return config.questionConfig.sendCooloffPeriodMs;
-            case Chat_MessageType_Enum.Answer:
-                return config.answerConfig.sendCooloffPeriodMs;
-            case Chat_MessageType_Enum.Poll:
-                return config.pollConfig.sendCooloffPeriodMs;
-        }
-    }, [
-        newMessageType,
-        config.answerConfig.sendCooloffPeriodMs,
-        config.emoteConfig.sendCooloffPeriodMs,
-        config.messageConfig.sendCooloffPeriodMs,
-        config.pollConfig.sendCooloffPeriodMs,
-        config.questionConfig.sendCooloffPeriodMs,
-    ]);
+    // const lockoutTimeMs = useMemo(() => {
+    //     switch (newMessageType) {
+    //         case Chat_MessageType_Enum.Message:
+    //             return config.messageConfig.sendCooloffPeriodMs;
+    //         case Chat_MessageType_Enum.Emote:
+    //             return config.emoteConfig.sendCooloffPeriodMs;
+    //         case Chat_MessageType_Enum.Question:
+    //             return config.questionConfig.sendCooloffPeriodMs;
+    //         case Chat_MessageType_Enum.Answer:
+    //             return config.answerConfig.sendCooloffPeriodMs;
+    //         case Chat_MessageType_Enum.Poll:
+    //             return config.pollConfig.sendCooloffPeriodMs;
+    //     }
+    // }, [
+    //     newMessageType,
+    //     config.answerConfig.sendCooloffPeriodMs,
+    //     config.emoteConfig.sendCooloffPeriodMs,
+    //     config.messageConfig.sendCooloffPeriodMs,
+    //     config.pollConfig.sendCooloffPeriodMs,
+    //     config.questionConfig.sendCooloffPeriodMs,
+    // ]);
 
     const newMessageComparisonV = newMessage.replace(/\s+/gi, " ").trim();
 
@@ -151,9 +145,9 @@ export function ComposeContextProvider({
             ? `Minimum length ${minLength} character${minLength !== 1 ? "s" : ""}`
             : maxLength !== undefined && newMessageComparisonV.length > maxLength
             ? `${newMessageComparisonV.length} / ${maxLength} character${maxLength !== 1 ? "s" : ""}`
-            : newMessageType === Chat_MessageType_Enum.Question && !newMessageComparisonV.includes("?")
-            ? "Question mark required."
-            : newMessageType === Chat_MessageType_Enum.Answer && !("questionMessagesIds" in newMessageData)
+            : // : newMessageType === Chat_MessageType_Enum.Question && !newMessageComparisonV.includes("?")
+            // ? "Question mark required."
+            newMessageType === Chat_MessageType_Enum.Answer && !("questionMessagesIds" in newMessageData)
             ? "Please select the question you are answering."
             : undefined;
 
@@ -178,105 +172,101 @@ export function ComposeContextProvider({
         [newMessageType]
     );
 
-    if (setAnsweringQuestionIdRef?.current) {
-        setAnsweringQuestionIdRef.current.f = setAnsweringQuestionId;
-        setAnsweringQuestionIdRef.current.answeringIds =
-            newMessageType === Chat_MessageType_Enum.Answer
-                ? (newMessageData as AnswerMessageData).questionMessagesIds ?? null
-                : null;
-    }
+    useEffect(() => {
+        if (setAnsweringQuestionIdRef?.current) {
+            setAnsweringQuestionIdRef.current.f = setAnsweringQuestionId;
+            setAnsweringQuestionIdRef.current.answeringIds =
+                newMessageType === Chat_MessageType_Enum.Answer
+                    ? (newMessageData as AnswerMessageData).questionMessagesIds ?? null
+                    : null;
+        }
+    }, [newMessageData, newMessageType, setAnsweringQuestionId, setAnsweringQuestionIdRef]);
+
+    const send = useCallback(
+        (data?: MessageData) => {
+            (async () => {
+                if (!config.currentAttendeeId) {
+                    throw new Error("Not authorized.");
+                }
+
+                try {
+                    const isEmote = /^\p{Emoji}$/iu.test(newMessage);
+                    sendQueries.send(
+                        config.state.Id,
+                        config.currentAttendeeId,
+                        newMessageType === Chat_MessageType_Enum.Message && isEmote
+                            ? Chat_MessageType_Enum.Emote
+                            : newMessageType,
+                        newMessage,
+                        data ?? newMessageData,
+                        false
+                    );
+
+                    setNewMessage("");
+                    setNewMessageData({});
+                    setNewMessageType((old) =>
+                        old === Chat_MessageType_Enum.Message || old === Chat_MessageType_Enum.Answer
+                            ? old
+                            : Chat_MessageType_Enum.Message
+                    );
+                } catch (e) {
+                    console.error(`${new Date().toLocaleString()}: Failed to send message`, e);
+                } finally {
+                    setLastSendTime(Date.now());
+                }
+            })();
+        },
+        [config.currentAttendeeId, newMessage, newMessageData, newMessageType, config.state.Id, sendQueries]
+    );
+    const messageLengthRange = useMemo(
+        () => ({
+            min: minLength,
+            max: maxLength,
+        }),
+        [maxLength, minLength]
+    );
+    const setNewMessageTypeF = useCallback(
+        (type: Chat_MessageType_Enum) => {
+            if (type !== newMessageType) {
+                setNewMessageType(type);
+                setNewMessageData({});
+            }
+        },
+        [newMessageType]
+    );
 
     const ctx = useMemo(
         () => ({
             newMessage,
             setNewMessage,
             newMessageType,
-            setNewMessageType: (type: Chat_MessageType_Enum) => {
-                if (type !== newMessageType) {
-                    setNewMessageType(type);
-                    setNewMessageData({});
-                }
-            },
+            setNewMessageType: setNewMessageTypeF,
             newMessageData,
             setNewMessageData,
-            messageLengthRange: {
-                min: minLength,
-                max: maxLength,
-            },
+            messageLengthRange,
             lastSendTime,
             blockedReason,
 
-            isSending,
-            sendError: sendError ?? undefined,
-            send: (data?: MessageData) => {
-                setIsSending(true);
-                (async () => {
-                    if (!config.currentAttendeeId || !config.currentAttendeeName) {
-                        throw new Error("Not authorized.");
-                    }
-
-                    try {
-                        const isEmote = /^\p{Emoji}$/iu.test(newMessage);
-                        await sendQueries.send(
-                            selectedChat.id,
-                            config.currentAttendeeId,
-                            config.currentAttendeeName,
-                            newMessageType === Chat_MessageType_Enum.Message && isEmote
-                                ? Chat_MessageType_Enum.Emote
-                                : newMessageType,
-                            newMessage,
-                            data ?? newMessageData,
-                            false,
-                            selectedChat.title
-                        );
-
-                        setNewMessage("");
-                        setNewMessageData({});
-                        setNewMessageType((old) =>
-                            old === Chat_MessageType_Enum.Message || old === Chat_MessageType_Enum.Answer
-                                ? old
-                                : Chat_MessageType_Enum.Message
-                        );
-                    } catch (e) {
-                        console.error(`${new Date().toLocaleString()}: Failed to send message`, e);
-                        setSendError(e.message ?? e.toString());
-                        setIsSending(false);
-                    } finally {
-                        setLastSendTime(Date.now());
-                        setIsSending(false);
-                    }
-                })();
-            },
-            clearSendError: () => setSendError(null),
+            isSending: sendQueries.isSending,
+            sendError: undefined,
+            send,
 
             setAnsweringQuestionId,
+            readyToSend: blockedReason === undefined, // && (!lockoutTimeMs || now - lastSendTime > lockoutTimeMs),
         }),
         [
             blockedReason,
-            config.currentAttendeeId,
-            config.currentAttendeeName,
-            isSending,
             lastSendTime,
-            maxLength,
-            minLength,
+            messageLengthRange,
             newMessage,
             newMessageData,
             newMessageType,
-            selectedChat.id,
-            sendError,
-            sendQueries,
+            send,
+            sendQueries.isSending,
             setAnsweringQuestionId,
+            setNewMessageTypeF,
         ]
     );
 
-    return (
-        <ComposeContext.Provider
-            value={{
-                ...ctx,
-                readyToSend: blockedReason === undefined && (!lockoutTimeMs || now - lastSendTime > lockoutTimeMs),
-            }}
-        >
-            {children}
-        </ComposeContext.Provider>
-    );
+    return <ComposeContext.Provider value={ctx}>{children}</ComposeContext.Provider>;
 }

@@ -1,32 +1,28 @@
-import { Box, BoxProps, ButtonGroup, HStack, Spacer } from "@chakra-ui/react";
+import { Box, BoxProps, ButtonGroup, HStack } from "@chakra-ui/react";
 import React from "react";
-import PageCountBox from "../../Presence/PageCountBox";
 import { useChatConfiguration } from "../Configuration";
 import { PinnedButton } from "../Pin/PinnedButton";
 import { ChatPinnedQueryProvider } from "../Pin/PinnedQuery";
 import { SubscribedButton } from "../Subscribe/SubscribedButton";
 import { ChatSubscribedQueryProvider } from "../Subscribe/SubscribedQuery";
 import { HeadingText } from "./HeadingText";
-import { ChatTitleQueryProvider } from "./TitleQuery";
 
 export function ChatHeading({ ...rest }: BoxProps): JSX.Element {
     const config = useChatConfiguration();
 
     return (
-        <Box {...rest}>
-            <HStack spacing={config.spacing}>
-                <ChatTitleQueryProvider>
-                    <HeadingText />
-                </ChatTitleQueryProvider>
-                <Spacer />
-                <PageCountBox />
+        <Box p="5px" {...rest}>
+            <HStack spacing={config.spacing} overflow="hidden" alignItems="flex-start">
+                {config.customHeadingElements}
+                <HeadingText />
+                {/* <Spacer /> */}
+                {/* <PageCountBox /> */}
                 {config.currentAttendeeId ? (
                     <>
-                        <Spacer />
                         <ButtonGroup isAttached borderRadius={5} overflow="hidden">
                             <ChatPinnedQueryProvider>
                                 <PinnedButton
-                                    opacity={0.5}
+                                    opacity={0.8}
                                     _hover={{
                                         opacity: 1,
                                     }}
@@ -34,7 +30,7 @@ export function ChatHeading({ ...rest }: BoxProps): JSX.Element {
                                         opacity: 1,
                                     }}
                                     transition="opacity 0.2s ease-in-out"
-                                    size="sm"
+                                    size="xs"
                                     m={0}
                                     p={config.spacing}
                                     w="auto"
@@ -47,7 +43,7 @@ export function ChatHeading({ ...rest }: BoxProps): JSX.Element {
                             </ChatPinnedQueryProvider>
                             <ChatSubscribedQueryProvider>
                                 <SubscribedButton
-                                    opacity={0.5}
+                                    opacity={0.8}
                                     _hover={{
                                         opacity: 1,
                                     }}
@@ -55,7 +51,7 @@ export function ChatHeading({ ...rest }: BoxProps): JSX.Element {
                                         opacity: 1,
                                     }}
                                     transition="opacity 0.2s ease-in-out"
-                                    size="sm"
+                                    size="xs"
                                     m={0}
                                     p={config.spacing}
                                     w="auto"

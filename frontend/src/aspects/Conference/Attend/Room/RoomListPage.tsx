@@ -1,10 +1,12 @@
 import { gql } from "@apollo/client";
-import { Button, Heading, useDisclosure } from "@chakra-ui/react";
-import React, { useCallback, useEffect } from "react";
+import { Button, Heading, HStack, useDisclosure, VStack } from "@chakra-ui/react";
+import React, { useCallback } from "react";
 import { Permission_Enum, RoomListRoomDetailsFragment, useGetAllRoomsQuery } from "../../../../generated/graphql";
-import PageNotFound from "../../../Errors/PageNotFound";
+import { LinkButton } from "../../../Chakra/LinkButton";
+import ConferencePageNotFound from "../../../Errors/ConferencePageNotFound";
 import ApolloQueryWrapper from "../../../GQL/ApolloQueryWrapper";
-import usePrimaryMenuButtons from "../../../Menu/usePrimaryMenuButtons";
+import FAIcon from "../../../Icons/FAIcon";
+import { useNoPrimaryMenuButtons } from "../../../Menu/usePrimaryMenuButtons";
 import { useTitle } from "../../../Utils/useTitle";
 import RequireAtLeastOnePermissionWrapper from "../../RequireAtLeastOnePermissionWrapper";
 import { useConference } from "../../useConference";
@@ -13,8 +15,18 @@ import { RoomList } from "./RoomList";
 
 gql`
     query GetAllRooms($conferenceId: uuid!) {
-        Room(
-            where: { conferenceId: { _eq: $conferenceId }, roomPrivacyName: { _neq: MANAGED } }
+        socialRooms: Room(
+            where: {
+                conferenceId: { _eq: $conferenceId }
+                _not: { _or: [{ events: {} }, { chat: { enableMandatoryPin: { _eq: true } } }] }
+                roomPrivacyName: { _in: [PUBLIC, PRIVATE] }
+            }
+            order_by: { name: asc }
+        ) {
+            ...RoomListRoomDetails
+        }
+        programRooms: Room(
+            where: { conferenceId: { _eq: $conferenceId }, events: {}, roomPrivacyName: { _in: [PUBLIC, PRIVATE] } }
             order_by: { name: asc }
         ) {
             ...RoomListRoomDetails
@@ -24,6 +36,7 @@ gql`
     fragment RoomListRoomDetails on Room {
         id
         name
+        priority
         roomPrivacyName
         originatingContentGroupId
         originatingEventId
@@ -32,17 +45,7 @@ gql`
 
 export default function RoomListPage(): JSX.Element {
     const conference = useConference();
-    const { setPrimaryMenuButtons } = usePrimaryMenuButtons();
-    useEffect(() => {
-        setPrimaryMenuButtons([
-            {
-                key: "conference-home",
-                action: `/conference/${conference.slug}`,
-                text: conference.shortName,
-                label: conference.shortName,
-            },
-        ]);
-    }, [conference.shortName, conference.slug, setPrimaryMenuButtons]);
+    useNoPrimaryMenuButtons();
 
     const title = useTitle(`Rooms - ${conference.shortName}`);
 
@@ -60,7 +63,7 @@ export default function RoomListPage(): JSX.Element {
 
     return (
         <RequireAtLeastOnePermissionWrapper
-            componentIfDenied={<PageNotFound />}
+            componentIfDenied={<ConferencePageNotFound />}
             permissions={[
                 Permission_Enum.ConferenceViewAttendees,
                 Permission_Enum.ConferenceView,
@@ -68,16 +71,35 @@ export default function RoomListPage(): JSX.Element {
             ]}
         >
             {title}
-            <ApolloQueryWrapper getter={(data) => data.Room} queryResult={result}>
+            <ApolloQueryWrapper getter={(data) => data.programRooms} queryResult={result}>
                 {(rooms: readonly RoomListRoomDetailsFragment[]) => (
-                    <>
-                        <Heading as="h2">Rooms</Heading>
-                        <Button onClick={onOpen} colorScheme="green">
-                            Create new room
-                        </Button>
+                    <VStack>
+                        <Heading as="h2" mb={5} mt={5}>
+                            Program Rooms
+                        </Heading>
                         <RoomList rooms={rooms} layout="grid" />
                         <CreateRoomModal isOpen={isOpen} onClose={onClose} onCreated={refetch} />
-                    </>
+                    </VStack>
+                )}
+            </ApolloQueryWrapper>
+            <ApolloQueryWrapper getter={(data) => data.socialRooms} queryResult={result}>
+                {(rooms: readonly RoomListRoomDetailsFragment[]) => (
+                    <VStack>
+                        <Heading as="h2" my={5}>
+                            Social Rooms
+                        </Heading>
+                        <HStack flexWrap="wrap" justifyContent="center">
+                            <Button onClick={onOpen} colorScheme="green" mb={2}>
+                                Create new room
+                            </Button>
+                            <LinkButton to={`/conference/${conference.slug}/shuffle`} colorScheme="blue" mb={2}>
+                                <FAIcon icon="random" iconStyle="s" mr={3} />
+                                Shuffle queues
+                            </LinkButton>
+                        </HStack>
+                        <RoomList rooms={rooms} layout="grid" />
+                        <CreateRoomModal isOpen={isOpen} onClose={onClose} onCreated={refetch} />
+                    </VStack>
                 )}
             </ApolloQueryWrapper>
         </RequireAtLeastOnePermissionWrapper>

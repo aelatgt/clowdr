@@ -4,24 +4,24 @@ import bodyParser from "body-parser";
 import express, { Request, Response } from "express";
 import { AuthenticatedRequest } from "./checkScopes";
 import handlerEcho from "./handlers/echo";
-import { processEmailsJobQueue } from "./handlers/email";
 import {
     invitationConfirmCurrentHandler,
     invitationConfirmSendInitialEmailHandler,
     invitationConfirmSendRepeatEmailHandler,
     invitationConfirmWithCodeHandler,
-    processInvitationEmailsQueue,
 } from "./handlers/invitation";
 import protectedEchoHandler from "./handlers/protectedEcho";
-import { processSendSubmissionRequestsJobQueue } from "./handlers/upload";
 import { initialiseAwsClient } from "./lib/aws/awsClient";
 import { checkEventSecret } from "./middlewares/checkEventSecret";
 import { checkJwt } from "./middlewares/checkJwt";
 import { checkUserScopes } from "./middlewares/checkScopes";
 import { router as amazonTranscribeRouter } from "./router/amazonTranscribe";
+import { router as analyticsRouter } from "./router/analytics";
+import { router as attendeeGoogleAccountRouter } from "./router/attendeeGoogleAccount";
 import { router as broadcastContentItemRouter } from "./router/broadcastContentItem";
 import { router as channelsRouter } from "./router/channels";
 import { router as chatRouter } from "./router/chat";
+import { router as combineVideosJobRouter } from "./router/combineVideosJob";
 import { router as companionRouter } from "./router/companion";
 import { router as conferencePrepareJobRouter } from "./router/conferencePrepareJob";
 import { router as contentItemRouter } from "./router/contentItem";
@@ -30,12 +30,14 @@ import { router as eventRouter } from "./router/event";
 import { router as eventPersonRouter } from "./router/eventPerson";
 import { router as eventRoomJoinRequestRouter } from "./router/eventRoomJoinRequest";
 import { router as eventVonageSessionRouter } from "./router/eventVonageSession";
+import { router as googleRouter } from "./router/google";
 import { router as mediaConvertRouter } from "./router/mediaConvert";
 import { router as mediaLiveRouter } from "./router/mediaLive";
 import { router as mediaPackageRouter } from "./router/mediaPackage";
 import { router as mediaPackageHarvestJobRouter } from "./router/mediaPackageHarvestJob";
 import { router as openshotRouter } from "./router/openshot";
 import { router as profileRouter } from "./router/profile";
+import { router as queuesRouter } from "./router/queues";
 import { router as roomRouter } from "./router/room";
 import { router as shuffleRoomsRouter } from "./router/shuffleRooms";
 import { router as videoRenderJobRouter } from "./router/videoRenderJob";
@@ -75,6 +77,7 @@ app.use("/amazonTranscribe", amazonTranscribeRouter);
 app.use("/elasticTranscoder", elasticTranscoderRouter);
 app.use("/mediaLive", mediaLiveRouter);
 app.use("/mediaPackage", mediaPackageRouter);
+app.use("/google", googleRouter);
 
 app.use("/vonage", vonageRouter);
 
@@ -88,12 +91,17 @@ app.use("/eventVonageSession", eventVonageSessionRouter);
 app.use("/eventRoomJoinRequest", eventRoomJoinRequestRouter);
 app.use("/eventPerson", eventPersonRouter);
 app.use("/mediaPackageHarvestJob", mediaPackageHarvestJobRouter);
+app.use("/combineVideosJob", combineVideosJobRouter);
+app.use("/attendeeGoogleAccount", attendeeGoogleAccountRouter);
 
 app.use("/channels", channelsRouter);
 
 app.use("/profile", profileRouter);
 app.use("/shuffle", shuffleRoomsRouter);
 app.use("/chat", chatRouter);
+
+app.use("/queues", queuesRouter);
+app.use("/analytics", analyticsRouter);
 
 app.get("/", function (_req, res) {
     res.send("Clowdr");
@@ -116,39 +124,6 @@ app.post("/echo", jsonParser, async (req: Request, res: Response) => {
     console.log(`Echoing "${params.message}"`);
     const result = handlerEcho(params);
     return res.json(result);
-});
-
-app.post("/queues/processEmailsJobQueue", jsonParser, async (_req: Request, res: Response) => {
-    try {
-        await processEmailsJobQueue();
-    } catch (e) {
-        console.error("Failure while processing emails job queue", e);
-        res.status(500).json("Failure");
-        return;
-    }
-    res.status(200).json("OK");
-});
-
-app.post("/queues/processSendSubmissionRequestsJobQueue", jsonParser, async (_req: Request, res: Response) => {
-    try {
-        await processSendSubmissionRequestsJobQueue();
-    } catch (e) {
-        console.error("Failure while processing send submission requests job queue", e);
-        res.status(500).json("Failure");
-        return;
-    }
-    res.status(200).json("OK");
-});
-
-app.post("/queues/processInvitationEmailsQueue", jsonParser, async (_req: Request, res: Response) => {
-    try {
-        await processInvitationEmailsQueue();
-    } catch (e) {
-        console.error("Failure while processing invitations emails job queue", e);
-        res.status(500).json("Failure");
-        return;
-    }
-    res.status(200).json("OK");
 });
 
 app.post("/invitation/confirm/current", jsonParser, checkJwt, checkUserScopes, async (_req: Request, res: Response) => {

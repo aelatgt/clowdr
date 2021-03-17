@@ -5,7 +5,7 @@ import { LinkButton } from "../Chakra/LinkButton";
 import { useTitle } from "../Utils/useTitle";
 import GenericErrorPage from "./GenericErrorPage";
 
-export default function PageNotFound(): JSX.Element {
+export default function PageNotFound({ loggedIn }: { loggedIn?: boolean }): JSX.Element {
     const title = useTitle("Page not found");
     const location = useLocation();
     const conferenceSlug = useMemo(() => {
@@ -15,20 +15,30 @@ export default function PageNotFound(): JSX.Element {
         }
         return undefined;
     }, [location.pathname]);
+    // conferenceSlug ? `/conference/${conferenceSlug}` :
 
     return (
         <GenericErrorPage heading="Sorry, we couldn't find that page.">
             <>
                 {title}
-                {conferenceSlug ? (
+                {conferenceSlug && loggedIn ? (
                     <>
                         <Text fontSize="xl" lineHeight="revert" fontWeight="light" fontStyle="italic" maxW={600}>
-                            Not what you expected to see?
+                            You are logged in but...
                         </Text>
                         <Text fontSize="xl" lineHeight="revert" fontWeight="light" maxW={600}>
-                            You may not have received or accepted your invitation to the conference you&apos;re trying
-                            to access. Anyone can log in to Clowdr but you will need the invitation code sent via email
-                            by your conference to access its private pages.
+                            ...you may not have received or accepted your invitation to the conference you&apos;re
+                            trying to access. You are logged into Clowdr but you will need the invitation code sent via
+                            email by your conference to access its private pages.
+                        </Text>
+                    </>
+                ) : loggedIn ? (
+                    <>
+                        <Text fontSize="xl" lineHeight="revert" fontWeight="light" fontStyle="italic" maxW={600}>
+                            You are not logged in
+                        </Text>
+                        <Text fontSize="xl" lineHeight="revert" fontWeight="light" maxW={600}>
+                            Please try going to the home page and logging in, then return to this page.
                         </Text>
                     </>
                 ) : (
@@ -41,7 +51,7 @@ export default function PageNotFound(): JSX.Element {
                         .
                     </Text>
                 )}
-                <LinkButton to={conferenceSlug ? `/conference/${conferenceSlug}` : "/"}>Go to home page</LinkButton>
+                <LinkButton to="/">Go to home page</LinkButton>
             </>
         </GenericErrorPage>
     );

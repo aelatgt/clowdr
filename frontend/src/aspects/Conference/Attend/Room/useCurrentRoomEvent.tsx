@@ -6,65 +6,11 @@ import usePolling from "../../../Generic/usePolling";
 interface Result {
     currentRoomEvent: Room_EventSummaryFragment | null;
     nextRoomEvent: Room_EventSummaryFragment | null;
+    nextNextRoomEvent: Room_EventSummaryFragment | null;
     withinThreeMinutesOfBroadcastEvent: boolean;
     secondsUntilBroadcastEvent: number;
     secondsUntilZoomEvent: number;
 }
-
-// gql`
-//     query CurrentRoomData_GetEvents() {
-//         Event {
-//         ...CurrentRoomData_RoomEventSummary
-//         }
-//     }
-
-//     fragment CurrentRoomData_RoomEventSummary on Event {
-//         id
-//         conferenceId
-//         startTime
-//         name
-//         endTime
-//         intendedRoomModeName
-//         eventPeople {
-//             id
-//             roleName
-//             attendee {
-//                 displayName
-//                 id
-//                 userId
-//             }
-//         }
-//         contentGroup {
-//             ...Room_ContentGroupData
-//         }
-//     }
-
-//     fragment CurrentRoomEvent_ContentGroupData on ContentGroup {
-//         id
-//         title
-//         contentGroupTypeName
-//         chatId
-//         chat {
-//             room {
-//                 id
-//                 name
-//             }
-//         }
-//         contentItems(where: { isHidden: { _eq: false } }) {
-//             ...Room_ContentItemData
-//         }
-//         people(order_by: { priority: asc }) {
-//             ...ContentPersonData
-//         }
-//     }
-
-//     fragment CurrentRoomEvent_ContentItemData on ContentItem {
-//         id
-//         name
-//         contentTypeName
-//         data
-//     }
-// `;
 
 export function useCurrentRoomEvent(roomEvents: readonly Room_EventSummaryFragment[]): Result {
     const broadcastEvents = useMemo(
@@ -95,7 +41,6 @@ export function useCurrentRoomEvent(roomEvents: readonly Room_EventSummaryFragme
             setCurrentRoomEvent(null);
         }
     }, [roomEvents]);
-    usePolling(getCurrentEvent, 10000, true);
 
     const [withinThreeMinutesOfBroadcastEvent, setWithinThreeMinutesOfBroadcastEvent] = useState<boolean>(false);
     const getWithinThreeMinutesOfEvent = useCallback(() => {
@@ -107,7 +52,6 @@ export function useCurrentRoomEvent(roomEvents: readonly Room_EventSummaryFragme
         });
         setWithinThreeMinutesOfBroadcastEvent(eventsSoon.length > 0);
     }, [broadcastEvents]);
-    usePolling(getWithinThreeMinutesOfEvent, 10000, true);
 
     const [secondsUntilBroadcastEvent, setSecondsUntilBroadcastEvent] = useState<number>(Number.MAX_SAFE_INTEGER);
     const computeSecondsUntilBroadcastEvent = useCallback(() => {
@@ -136,7 +80,6 @@ export function useCurrentRoomEvent(roomEvents: readonly Room_EventSummaryFragme
 
         setSecondsUntilBroadcastEvent(Number.MAX_SAFE_INTEGER);
     }, [broadcastEvents]);
-    usePolling(computeSecondsUntilBroadcastEvent, 1000, true);
 
     const [secondsUntilZoomEvent, setSecondsUntilZoomEvent] = useState<number>(Number.MAX_SAFE_INTEGER);
     const computeSecondsUntilZoomEvent = useCallback(() => {
@@ -165,7 +108,12 @@ export function useCurrentRoomEvent(roomEvents: readonly Room_EventSummaryFragme
 
         setSecondsUntilZoomEvent(Number.MAX_SAFE_INTEGER);
     }, [zoomEvents]);
-    usePolling(computeSecondsUntilZoomEvent, 1000, true);
+
+    const frequentUpdate = useCallback(() => {
+        computeSecondsUntilZoomEvent();
+        computeSecondsUntilBroadcastEvent();
+    }, [computeSecondsUntilBroadcastEvent, computeSecondsUntilZoomEvent]);
+    usePolling(frequentUpdate, 1000, true);
 
     const [nextRoomEvent, setNextRoomEvent] = useState<Room_EventSummaryFragment | null>(null);
     const getNextEvent = useCallback(() => {
@@ -175,19 +123,46 @@ export function useCurrentRoomEvent(roomEvents: readonly Room_EventSummaryFragme
         setNextRoomEvent(futureEvents.length > 0 ? futureEvents[0] : null);
     }, [roomEvents]);
 
-    usePolling(getNextEvent, 10000, true);
+    const [nextNextRoomEvent, setNextNextRoomEvent] = useState<Room_EventSummaryFragment | null>(null);
+    const getNextNextEvent = useCallback(() => {
+        const now = new Date().getTime();
+        const sortedEvents = R.sortBy((event) => event.startTime, roomEvents);
+        const futureEvents = sortedEvents.filter((event) => Date.parse(event.startTime) > now);
+        setNextNextRoomEvent(futureEvents.length > 1 ? futureEvents[1] : null);
+    }, [roomEvents]);
+
+    const infrequentUpdate = useCallback(() => {
+        getWithinThreeMinutesOfEvent();
+        getCurrentEvent();
+        getNextEvent();
+        getNextNextEvent();
+    }, [getCurrentEvent, getNextEvent, getNextNextEvent, getWithinThreeMinutesOfEvent]);
+    usePolling(infrequentUpdate, 10000, true);
 
     useEffect(() => {
-        getCurrentEvent();
         getWithinThreeMinutesOfEvent();
+        getCurrentEvent();
         getNextEvent();
     }, [getCurrentEvent, getNextEvent, getWithinThreeMinutesOfEvent]);
 
-    return {
-        currentRoomEvent,
-        withinThreeMinutesOfBroadcastEvent,
-        nextRoomEvent,
-        secondsUntilBroadcastEvent,
-        secondsUntilZoomEvent,
-    };
+    const result = useMemo(
+        () => ({
+            currentRoomEvent,
+            withinThreeMinutesOfBroadcastEvent,
+            nextRoomEvent,
+            nextNextRoomEvent,
+            secondsUntilBroadcastEvent,
+            secondsUntilZoomEvent,
+        }),
+        [
+            currentRoomEvent,
+            nextRoomEvent,
+            nextNextRoomEvent,
+            secondsUntilBroadcastEvent,
+            secondsUntilZoomEvent,
+            withinThreeMinutesOfBroadcastEvent,
+        ]
+    );
+
+    return result;
 }

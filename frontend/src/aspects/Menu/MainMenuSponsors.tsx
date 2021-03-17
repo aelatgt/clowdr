@@ -1,8 +1,10 @@
 import { gql } from "@apollo/client";
 import { Grid, GridItem, Image, List, ListItem, Text, useToken } from "@chakra-ui/react";
 import { ContentItemDataBlob, ContentType_Enum, isContentItemDataBlob } from "@clowdr-app/shared-types/build/content";
+import AmazonS3URI from "amazon-s3-uri";
 import * as R from "ramda";
 import React, { useMemo } from "react";
+import { Twemoji } from "react-emoji-render";
 import {
     MainMenuSponsors_ContentGroupDataFragment,
     useMainMenuSponsors_GetSponsorsQuery,
@@ -29,7 +31,7 @@ gql`
             id
         }
         logo: contentItems(
-            where: { contentTypeName: { _eq: IMAGE_URL }, layoutData: { _contains: { isLogo: true } } }
+            where: { contentTypeName: { _in: [IMAGE_URL, IMAGE_FILE] }, layoutData: { _contains: { isLogo: true } } }
             order_by: { updatedAt: desc }
             limit: 1
         ) {
@@ -37,6 +39,7 @@ gql`
             data
         }
         title
+        shortTitle
     }
 `;
 
@@ -57,6 +60,9 @@ export function MainMenuSponsors(): JSX.Element {
 
                 if (latestData?.type === ContentType_Enum.ImageUrl) {
                     return latestData.url;
+                } else if (latestData?.type === ContentType_Enum.ImageFile) {
+                    const { bucket, key } = new AmazonS3URI(latestData.s3Url);
+                    return `https://s3.${import.meta.env.SNOWPACK_PUBLIC_AWS_REGION}.amazonaws.com/${bucket}/${key}`;
                 }
             }
 
@@ -93,7 +99,7 @@ export function MainMenuSponsors(): JSX.Element {
                                         linkProps={{ h: "100%", w: "100%" }}
                                         border={`1px solid ${borderColour}`}
                                     >
-                                        <Grid templateColumns="25% 75%" columnGap={4} h="100%" w="100%" pr={4}>
+                                        <Grid templateColumns="25% 75%" gridColumnGap={4} h="100%" w="100%" pr={4}>
                                             <GridItem minH="0" py={2} px={4} bgColor="white">
                                                 {sponsorLogos[sponsorContentGroup.id] ? (
                                                     <Image
@@ -113,7 +119,16 @@ export function MainMenuSponsors(): JSX.Element {
                                                 alignItems="center"
                                                 justifyContent="space-between"
                                             >
-                                                <Text fontSize="lg">{sponsorContentGroup.title}</Text>
+                                                <Text fontSize="lg">
+                                                    <Twemoji
+                                                        className="twemoji"
+                                                        text={
+                                                            sponsorContentGroup.shortTitle
+                                                                ? sponsorContentGroup.shortTitle
+                                                                : sponsorContentGroup.title
+                                                        }
+                                                    />
+                                                </Text>
                                                 <PageCountText width="10%" path={url} />
                                             </GridItem>
                                         </Grid>

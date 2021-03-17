@@ -1,4 +1,5 @@
 import { ContentItemDataBlob, ContentRole } from "@clowdr-app/shared-types/build/content";
+import type { LayoutDataBlob } from "@clowdr-app/shared-types/build/content/layoutData";
 import type { ContentGroupType_Enum, ContentType_Enum } from "../../../../generated/graphql";
 
 export const ContentRoleNames: ReadonlyArray<ContentRole> = [
@@ -22,7 +23,7 @@ export type ContentItemDescriptor = {
     id: string;
     typeName: ContentType_Enum;
     isHidden: boolean;
-    layoutData: any;
+    layoutData: LayoutDataBlob | null;
     requiredContentId?: string | null;
     name: string;
     data: ContentItemDataBlob;
@@ -112,19 +113,25 @@ export type ContentGroupDescriptor = {
     people: ContentGroupPersonDescriptor[];
     hallways: ContentGroupHallwayDescriptor[];
     originatingDataId?: string;
+    rooms: {
+        id: string;
+    }[];
+};
+
+export type RenderEditorProps = {
+    data: ContentDescriptor;
+    update: (updated: ContentDescriptor) => void;
 };
 
 export type ItemBaseTemplate =
     | {
           supported: false;
       }
-    | {
-          supported: true;
-          createDefault: (
-              group: ContentGroupDescriptor,
-              itemType: ContentType_Enum,
-              required: boolean
-          ) => ContentDescriptor;
-          renderEditorHeading: (data: ContentDescriptor) => JSX.Element;
-          renderEditor: (data: ContentDescriptor, update: (updated: ContentDescriptor) => void) => JSX.Element;
-      };
+    | SupportedItemBaseTemplate;
+
+export type SupportedItemBaseTemplate = {
+    supported: true;
+    createDefault: (itemType: ContentType_Enum, required: boolean) => ContentDescriptor;
+    renderEditorHeading: (data: ContentDescriptor) => JSX.Element;
+    renderEditor: (props: RenderEditorProps) => JSX.Element;
+};

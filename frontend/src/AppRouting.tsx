@@ -12,12 +12,13 @@ import SubmitItemPage from "./aspects/Content/SubmitItemPage";
 import CRUDTestPage from "./aspects/CRUDTable/CRUDTestPage";
 import GenericErrorPage from "./aspects/Errors/GenericErrorPage";
 import PageNotFound from "./aspects/Errors/PageNotFound";
+import { GoogleOAuth, GoogleOAuthRedirect } from "./aspects/Google/GoogleOAuth";
 import AcceptInvitationPage from "./aspects/Invitation/AcceptInvitationPage";
 import CurrentUserPage from "./aspects/Users/CurrentUser/CurrentUserPage";
 import ExistingUserLandingPage from "./aspects/Users/ExistingUser/LandingPage";
 import NewUserLandingPage from "./aspects/Users/NewUser/LandingPage";
 
-export default function Routing(): JSX.Element {
+export default function Routing({ rootUrl }: { rootUrl?: string }): JSX.Element {
     return (
         <Switch>
             {/* <Route path="/">
@@ -129,14 +130,9 @@ export default function Routing(): JSX.Element {
 
             <ProtectedRoute altIfNotAuthed={<Redirect to="/" />} exact path="/join" component={UseInviteOrCreateView} />
 
-            <Route
-                path="/conference/:confSlug"
-                component={(
-                    props: RouteComponentProps<{
-                        confSlug: string;
-                    }>
-                ) => <ConferenceRoutes rootUrl={props.match.url} confSlug={props.match.params.confSlug} />}
-            />
+            <ProtectedRoute altIfNotAuthed={<Redirect to="/" />} exact path="/googleoauth2" component={GoogleOAuth} />
+
+            {rootUrl && <ConferenceRoutes rootUrl={rootUrl} />}
 
             <Route
                 path="/upload/:id/:token"
@@ -152,6 +148,8 @@ export default function Routing(): JSX.Element {
                     />
                 )}
             />
+
+            <Route exact path="/googleoauth" component={GoogleOAuthRedirect} />
 
             {/*
 

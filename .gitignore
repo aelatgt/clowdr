@@ -115,3 +115,6 @@ ngrok.yml
 frontend/x.env.local
 *.local
 services/presence/build/
+pktriot.json
+certs
+frontend/.env.production.x

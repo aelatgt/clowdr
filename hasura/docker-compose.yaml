@@ -18,6 +18,10 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
   graphql-engine:
     image: hasura/graphql-engine:latest.cli-migrations-v2
     ports:
@@ -38,9 +42,12 @@ services:
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
       ACTION_BASE_URL: ${ACTION_BASE_URL}
+      PRESENCE_BASE_URL: ${PRESENCE_BASE_URL}
       HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
       HASURA_GRAPHQL_UNAUTHORIZED_ROLE: ${HASURA_GRAPHQL_UNAUTHORIZED_ROLE}
       EVENT_SECRET: ${EVENT_SECRET}
+      PRESENCE_FLUSH_SECRET: ${PRESENCE_FLUSH_SECRET}
+      PRESENCE_SUMMARY_SECRET: ${PRESENCE_SUMMARY_SECRET}
       HASURA_GRAPHQL_METADATA_DIR: /hasura-metadata
       HASURA_GRAPHQL_MIGRATIONS_DIR: /hasura-migrations
 

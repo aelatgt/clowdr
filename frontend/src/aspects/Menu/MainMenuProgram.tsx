@@ -17,7 +17,8 @@ import {
 } from "@chakra-ui/react";
 import { formatRelative } from "date-fns";
 import * as R from "ramda";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Twemoji } from "react-emoji-render";
 import {
     MenuSchedule_EventFragment,
     useMenuScheduleQuery,
@@ -31,31 +32,14 @@ import ApolloQueryWrapper from "../GQL/ApolloQueryWrapper";
 import { FAIcon } from "../Icons/FAIcon";
 
 gql`
-    query MenuSchedule(
-        $now: timestamptz!
-        $inThreeMinutes: timestamptz!
-        $in30Minutes: timestamptz!
-        $inOneHour: timestamptz!
-        $conferenceId: uuid!
-    ) {
-        eventsNow: Event(
+    query MenuSchedule($now: timestamptz!, $inOneHour: timestamptz!, $conferenceId: uuid!) {
+        Event(
             where: {
-                startTime: { _lte: $inThreeMinutes }
+                startTime: { _lte: $inOneHour }
                 endTime: { _gte: $now }
                 conferenceId: { _eq: $conferenceId }
+                room: {}
             }
-        ) {
-            ...MenuSchedule_Event
-        }
-
-        eventsIn30mins: Event(
-            where: { startTime: { _gt: $inThreeMinutes, _lte: $in30Minutes }, conferenceId: { _eq: $conferenceId } }
-        ) {
-            ...MenuSchedule_Event
-        }
-
-        eventsIn1Hour: Event(
-            where: { startTime: { _gt: $in30Minutes, _lte: $inOneHour }, conferenceId: { _eq: $conferenceId } }
         ) {
             ...MenuSchedule_Event
         }
@@ -65,6 +49,7 @@ gql`
         Event(
             where: {
                 conferenceId: { _eq: $conferenceId }
+                room: {}
                 _or: [
                     { name: { _ilike: $search } }
                     {
@@ -108,34 +93,60 @@ gql`
             }
         }
         contentGroup {
+            id
             title
         }
     }
 `;
 
+type FilterTimes = {
+    now: Date;
+    inThreeMinutes: Date;
+    in30Minutes: Date;
+    inOneHour: Date;
+};
+
+type Times = {
+    now: Date;
+    inOneHour: Date;
+};
+
+function makeFilterTimes(): FilterTimes {
+    return {
+        now: new Date(),
+        inThreeMinutes: new Date(Date.now() + 3 * 60 * 1000),
+        in30Minutes: new Date(Date.now() + 30 * 60 * 1000),
+        inOneHour: new Date(Date.now() + 60 * 60 * 1000),
+    };
+}
+
+function makeTimes(): Times {
+    return {
+        now: new Date(Date.now()),
+        inOneHour: new Date(Date.now() + 60 * 60 * 1000),
+    };
+}
+
 export function MainMenuProgram(): JSX.Element {
     const conference = useConference();
-    const [now, setNow] = useState<Date>(new Date());
-    const [inThreeMinutes, setInThreeMinutes] = useState<Date>(new Date(Date.now() + 3 * 60 * 1000));
-    const [in30Minutes, setIn30Minutes] = useState<Date>(new Date(Date.now() + 30 * 60 * 1000));
-    const [inOneHour, setInOneHour] = useState<Date>(new Date(Date.now() + 60 * 60 * 1000));
-    const updateTimes = useCallback(() => {
-        setNow(new Date());
-        setInThreeMinutes(new Date(Date.now() + 3 * 60 * 1000));
-        setIn30Minutes(new Date(Date.now() + 30 * 60 * 1000));
-        setInOneHour(new Date(Date.now() + 60 * 60 * 1000));
-    }, []);
-    usePolling(updateTimes, 60000, true);
+
+    const [times, setTimes] = useState<Times>(makeTimes());
+    const updateTimes = useCallback(() => setTimes(makeTimes()), [setTimes]);
+    usePolling(updateTimes, 180000, true);
 
     const scheduleResult = useMenuScheduleQuery({
         variables: {
             conferenceId: conference.id,
-            now,
-            inThreeMinutes,
-            in30Minutes,
-            inOneHour,
+            now: times.now,
+            inOneHour: times.inOneHour,
         },
     });
+
+    const [filterTimes, setFilterTimes] = useState<FilterTimes>(makeFilterTimes());
+    const updateFilterTimes = useCallback(() => {
+        setFilterTimes(makeFilterTimes());
+    }, [setFilterTimes]);
+    usePolling(updateFilterTimes, 10000, true);
 
     const [search, debouncedSearch, setSearch] = useDebouncedState<string>("", 1000);
 
@@ -150,7 +161,7 @@ export function MainMenuProgram(): JSX.Element {
         if (debouncedSearch.length) performSearch();
     }, [debouncedSearch, performSearch]);
 
-    const resultCountStr = `showing ${
+    const resultCountStr = `Showing ${
         debouncedSearch.length > 0 ? searchResult.data?.Event.length ?? 0 : "upcoming"
     } events`;
     const [ariaSearchResultStr, setAriaSearchResultStr] = useState<string>(resultCountStr);
@@ -166,10 +177,10 @@ export function MainMenuProgram(): JSX.Element {
     return (
         <>
             <FormControl mb={4} maxW={400}>
-                <FormLabel mt={4} textAlign="center">
+                <FormLabel textAlign="center" fontSize="sm">
                     {resultCountStr}
                 </FormLabel>
-                <InputGroup>
+                <InputGroup size="sm">
                     <InputLeftAddon aria-hidden>Search</InputLeftAddon>
                     <Input
                         aria-label={"Search found " + ariaSearchResultStr}
@@ -190,25 +201,44 @@ export function MainMenuProgram(): JSX.Element {
                 <>
                     <ApolloQueryWrapper getter={(data) => data.Event} queryResult={searchResult}>
                         {(events: readonly MenuSchedule_EventFragment[]) => (
-                            <MainMenuProgramInner events={events} title="Search results" showTime={true} />
+                            <MainMenuProgramInner
+                                linkToRoom={false}
+                                events={events}
+                                fromMillis={0}
+                                toMillis={Number.MAX_SAFE_INTEGER}
+                                title="Search results"
+                                showTime={true}
+                            />
                         )}
                     </ApolloQueryWrapper>
                 </>
             ) : (
                 <>
-                    <ApolloQueryWrapper getter={(data) => data.eventsNow} queryResult={scheduleResult}>
+                    <ApolloQueryWrapper getter={(data) => data.Event} queryResult={scheduleResult}>
                         {(events: readonly MenuSchedule_EventFragment[]) => (
-                            <MainMenuProgramInner events={events} title="Happening now" />
-                        )}
-                    </ApolloQueryWrapper>
-                    <ApolloQueryWrapper getter={(data) => data.eventsIn30mins} queryResult={scheduleResult}>
-                        {(events: readonly MenuSchedule_EventFragment[]) => (
-                            <MainMenuProgramInner events={events} title="Starting in the next 30 minutes" />
-                        )}
-                    </ApolloQueryWrapper>
-                    <ApolloQueryWrapper getter={(data) => data.eventsIn1Hour} queryResult={scheduleResult}>
-                        {(events: readonly MenuSchedule_EventFragment[]) => (
-                            <MainMenuProgramInner events={events} title="Starting in the next hour" />
+                            <>
+                                <MainMenuProgramInner
+                                    linkToRoom={true}
+                                    fromMillis={0}
+                                    toMillis={filterTimes.inThreeMinutes.getTime()}
+                                    events={events}
+                                    title="Happening now"
+                                />
+                                <MainMenuProgramInner
+                                    linkToRoom={false}
+                                    fromMillis={filterTimes.inThreeMinutes.getTime()}
+                                    toMillis={filterTimes.in30Minutes.getTime()}
+                                    events={events}
+                                    title="Starting in the next 30 minutes"
+                                />
+                                <MainMenuProgramInner
+                                    linkToRoom={false}
+                                    fromMillis={filterTimes.in30Minutes.getTime()}
+                                    toMillis={filterTimes.inOneHour.getTime()}
+                                    events={events}
+                                    title="Starting in the next hour"
+                                />
+                            </>
                         )}
                     </ApolloQueryWrapper>
                 </>
@@ -220,24 +250,43 @@ export function MainMenuProgram(): JSX.Element {
 export function MainMenuProgramInner({
     events,
     title,
+    fromMillis,
+    toMillis,
     showTime,
+    linkToRoom,
 }: {
     events: readonly MenuSchedule_EventFragment[];
     title: string;
     showTime?: boolean;
+    linkToRoom: boolean;
+    fromMillis: number;
+    toMillis: number;
 }): JSX.Element {
     const conference = useConference();
 
+    const filteredEvents = useMemo(
+        () =>
+            R.sortBy((e) => e.startTime, events).filter((event) => {
+                const startTime = Date.parse(event.startTime);
+                return startTime >= fromMillis && startTime < toMillis;
+            }),
+        [events, fromMillis, toMillis]
+    );
+
     return (
         <Box width="100%">
-            <Heading as="h4" size="sm" mt={4} mb={2} textAlign="left">
+            <Heading as="h4" size="sm" mt={4} mb={2} textAlign="left" fontSize="sm">
                 {title}
             </Heading>
-            {events.length > 0 ? (
+            {filteredEvents.length > 0 ? (
                 <List>
-                    {R.sortBy((e) => e.startTime, events).map((event) => {
-                        const eventName = event.name + (event.contentGroup ? ": " + event.contentGroup.title : "");
-
+                    {filteredEvents.map((event) => {
+                        const eventName =
+                            event.name.length > 0 && event.contentGroup
+                                ? event.name + ": " + event.contentGroup.title
+                                : event.contentGroup
+                                ? event.contentGroup.title
+                                : event.name;
                         return (
                             <ListItem key={event.id} width="100%" my={2}>
                                 {showTime ? (
@@ -246,15 +295,22 @@ export function MainMenuProgramInner({
                                     </Text>
                                 ) : undefined}
                                 <LinkButton
-                                    to={`/conference/${conference.slug}/room/${event.room.id}`}
+                                    to={
+                                        linkToRoom
+                                            ? `/conference/${conference.slug}/room/${event.room.id}`
+                                            : event.contentGroup
+                                            ? `/conference/${conference.slug}/item/${event.contentGroup.id}`
+                                            : `/conference/${conference.slug}/room/${event.room.id}`
+                                    }
                                     width="100%"
                                     linkProps={{ width: "100%" }}
                                     h="auto"
                                     py={2}
+                                    size="sm"
                                 >
                                     <HStack width="100%" justifyContent="space-between">
                                         <Text flex="0 1 1" overflow="hidden" title={eventName} whiteSpace="normal">
-                                            {eventName}
+                                            <Twemoji className="twemoji" text={eventName} />
                                         </Text>
                                         <Text flex="0 1 1">
                                             {event.eventTags.map((tag) => (

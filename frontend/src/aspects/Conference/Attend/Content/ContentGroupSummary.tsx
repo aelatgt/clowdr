@@ -1,16 +1,21 @@
 import { gql } from "@apollo/client";
-import { Box, Container, Heading, Text, VStack } from "@chakra-ui/react";
+import { Box, Container, Heading, HStack, Text, VStack } from "@chakra-ui/react";
 import {
     assertIsContentItemDataBlob,
     ContentBaseType,
     ContentItemDataBlob,
+    isContentItemDataBlob,
+    PaperFileBlob,
     PaperLinkBlob,
     PaperUrlBlob,
     VideoUrlBlob,
     ZoomBlob,
 } from "@clowdr-app/shared-types/build/content";
+import { notEmpty } from "@clowdr-app/shared-types/build/utils";
+import AmazonS3URI from "amazon-s3-uri";
 import * as R from "ramda";
 import React, { useMemo } from "react";
+import { Twemoji } from "react-emoji-render";
 import ReactPlayer from "react-player";
 import {
     ContentGroupSummary_ContentGroupDataFragment,
@@ -77,9 +82,11 @@ export function ContentGroupSummaryWrapper({
 export function ContentGroupSummary({
     contentGroupData,
     linkToItem,
+    children,
 }: {
     contentGroupData: ContentGroupSummary_ContentGroupDataFragment;
     linkToItem?: boolean;
+    children?: React.ReactNode | React.ReactNodeArray;
 }): JSX.Element {
     const abstractContentItem = useMemo(() => {
         const abstractItem = contentGroupData.contentItems.find(
@@ -136,6 +143,35 @@ export function ContentGroupSummary({
         return R.last(versions)?.data as PaperLinkBlob;
     }, [contentGroupData.contentItems]);
 
+    const paperFiles = useMemo<{ id: string; url: string; name: string }[]>(() => {
+        return contentGroupData.contentItems
+            .filter((contentItem) => contentItem.contentTypeName === ContentType_Enum.PaperFile)
+            .map((item) => {
+                if (isContentItemDataBlob(item.data)) {
+                    const blob = item.data as ContentItemDataBlob;
+                    const currentVersion = R.last(blob)?.data;
+                    if (!currentVersion || currentVersion.type !== ContentType_Enum.PaperFile) {
+                        return null;
+                    }
+                    const paperFile = currentVersion as PaperFileBlob;
+                    try {
+                        const { bucket, key } = new AmazonS3URI(paperFile.s3Url);
+                        return {
+                            id: item.id,
+                            name: "Slides",
+                            url: `https://s3.${
+                                import.meta.env.SNOWPACK_PUBLIC_AWS_REGION
+                            }.amazonaws.com/${bucket}/${key}`,
+                        };
+                    } catch (e) {
+                        return null;
+                    }
+                }
+                return null;
+            })
+            .filter(notEmpty);
+    }, [contentGroupData.contentItems]);
+
     const maybeVideoURL = useMemo(() => {
         const item = contentGroupData.contentItems.find(
             (contentItem) => contentItem.contentTypeName === ContentType_Enum.VideoUrl
@@ -148,7 +184,7 @@ export function ContentGroupSummary({
     }, [contentGroupData.contentItems]);
 
     return (
-        <Box alignItems="left" textAlign="left" my={5} maxW="100%" overflow="hidden">
+        <Box textAlign="left" my={5} maxW="100%" overflow="hidden">
             {linkToItem ? (
                 <LinkButton
                     to={`/conference/${conference.slug}/item/${contentGroupData.id}`}
@@ -158,7 +194,7 @@ export function ContentGroupSummary({
                     linkProps={{ mb: 5, maxW: "100%" }}
                     maxW="100%"
                 >
-                    <VStack alignItems="left" maxW="100%">
+                    <VStack alignItems="flex-start" maxW="100%">
                         <Text colorScheme="green">{contentGroupData.contentGroupTypeName}</Text>
                         <Heading
                             as="h2"
@@ -168,7 +204,7 @@ export function ContentGroupSummary({
                             overflowWrap="break-word"
                             whiteSpace="normal"
                         >
-                            {contentGroupData.title}
+                            <Twemoji className="twemoji" text={contentGroupData.title} />
                         </Heading>
                     </VStack>
                 </LinkButton>
@@ -176,20 +212,16 @@ export function ContentGroupSummary({
                 <>
                     <Text colorScheme="green">{contentGroupData.contentGroupTypeName}</Text>
                     <Heading as="h2" size="md" mb={5} textAlign="left">
-                        {contentGroupData.title}
+                        <Twemoji className="twemoji" text={contentGroupData.title} />
                     </Heading>
                 </>
             )}
-            {<AuthorList contentPeopleData={contentGroupData.people ?? []} />}
-            <VStack w="auto" alignItems="flex-start">
+            {children}
+            <AuthorList contentPeopleData={contentGroupData.people ?? []} />
+            <HStack alignItems="flex-start" flexWrap="wrap" mt={5}>
                 <RequireAtLeastOnePermissionWrapper permissions={[Permission_Enum.ConferenceViewAttendees]}>
                     {maybeZoomDetails ? (
-                        <ExternalLinkButton
-                            to={maybeZoomDetails}
-                            isExternal={true}
-                            colorScheme="green"
-                            linkProps={{ mt: 5 }}
-                        >
+                        <ExternalLinkButton to={maybeZoomDetails} isExternal={true} colorScheme="green">
                             Go to Zoom
                         </ExternalLinkButton>
                     ) : (
@@ -197,31 +229,31 @@ export function ContentGroupSummary({
                     )}
                 </RequireAtLeastOnePermissionWrapper>
                 {maybePaperURL ? (
-                    <ExternalLinkButton to={maybePaperURL} isExternal={true} colorScheme="red" linkProps={{ mt: 5 }}>
+                    <ExternalLinkButton to={maybePaperURL} isExternal={true} colorScheme="red">
                         Read the PDF
                     </ExternalLinkButton>
                 ) : (
                     <></>
                 )}
                 {maybePaperLink ? (
-                    <ExternalLinkButton
-                        to={maybePaperLink.url}
-                        isExternal={true}
-                        colorScheme="blue"
-                        linkProps={{ mt: 5 }}
-                    >
+                    <ExternalLinkButton to={maybePaperLink.url} isExternal={true} colorScheme="blue">
                         {maybePaperLink.text}
                     </ExternalLinkButton>
                 ) : (
                     <></>
                 )}
+                {paperFiles.map((paperFile) => (
+                    <ExternalLinkButton key={paperFile.id} to={paperFile.url} isExternal={true} colorScheme="blue">
+                        {paperFile.name}
+                    </ExternalLinkButton>
+                ))}
                 {maybeVideoURL ? (
                     <Box maxW="100%">
                         <ReactPlayer style={{ maxWidth: "100%" }} url={maybeVideoURL.url} controls={true} />
                     </Box>
                 ) : undefined}
-            </VStack>
-            <Container width="100%" mt={5} ml={0} pl={0}>
+            </HStack>
+            <Container width="100%" mt={5} ml={0} pl={0} maxW="100%">
                 {abstractContentItem}
             </Container>
         </Box>

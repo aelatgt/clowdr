@@ -86,6 +86,7 @@ gql`
                                                             { permissionName: CONFERENCE_MANAGE_GROUPS }
                                                             { permissionName: CONFERENCE_MANAGE_CONTENT }
                                                             { permissionName: CONFERENCE_MANAGE_SCHEDULE }
+                                                            { permissionName: CONFERENCE_MANAGE_SHUFFLE }
                                                         ]
                                                     }
                                                 }
@@ -196,6 +197,25 @@ gql`
                         ]
                     }
                 }
+                {
+                    conferenceId: $conferenceId
+                    enabled: false
+                    name: "Social Chairs"
+                    includeUnauthenticated: false
+                    groupRoles: {
+                        data: [
+                            {
+                                role: {
+                                    data: {
+                                        conferenceId: $conferenceId
+                                        name: "Social Chair"
+                                        rolePermissions: { data: [{ permissionName: CONFERENCE_MANAGE_SHUFFLE }] }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
             ]
         ) {
             returning {
@@ -232,7 +252,7 @@ gql`
                             contentTypeName: ABSTRACT
                             data: $abstractData
                             isHidden: false
-                            layoutData: {}
+                            layoutData: null
                             name: "Welcome text"
                         }
                         {
@@ -240,7 +260,7 @@ gql`
                             contentTypeName: CONTENT_GROUP_LIST
                             data: $contentGroupListData
                             isHidden: false
-                            layoutData: {}
+                            layoutData: null
                             name: "Content group list"
                         }
                     ]

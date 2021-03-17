@@ -1,5 +1,5 @@
 import { Box } from "@chakra-ui/react";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import ScrollContainer from "react-indiana-drag-scroll";
 import { useTimelineParameters } from "./useTimelineParameters";
 
@@ -29,36 +29,34 @@ export function ScrollerProvider({ children }: { children: React.ReactNode | Rea
         },
         [timelineParams.latestMs, timelineParams.earliestMs]
     );
-
-    return (
-        <ScrollerContext.Provider
-            value={{
-                visibleTimeSpanSeconds,
-                zoomTo,
-            }}
-        >
-            {children}
-        </ScrollerContext.Provider>
+    const ctx = useMemo(
+        () => ({
+            visibleTimeSpanSeconds,
+            zoomTo,
+        }),
+        [visibleTimeSpanSeconds, zoomTo]
     );
+
+    return <ScrollerContext.Provider value={ctx}>{children}</ScrollerContext.Provider>;
 }
 
 export default function Scroller({
     children,
-    height,
+    width,
 }: {
     children: React.ReactNode | React.ReactNodeArray;
-    height?: number;
+    width?: number;
 }): JSX.Element {
     const { visibleTimeSpanSeconds } = useScrollerParams();
     const { fullTimeSpanSeconds } = useTimelineParameters();
 
-    const innerWidthPx = (1920 * fullTimeSpanSeconds) / visibleTimeSpanSeconds;
+    const innerHeightPx = (1920 * fullTimeSpanSeconds) / visibleTimeSpanSeconds;
 
     return (
         <Box
             as={ScrollContainer}
-            w="100%"
-            h={height}
+            h={innerHeightPx + "px"}
+            w={width}
             vertical={false}
             hideScrollbars={false}
             role="region"
@@ -66,12 +64,13 @@ export default function Scroller({
         >
             <div
                 style={{
-                    width: innerWidthPx,
+                    width: "100%",
                     height: "100%",
                     boxSizing: "border-box",
                     transition: "none",
                     overflow: "hidden",
                     position: "relative",
+                    display: "flex",
                 }}
             >
                 {children}

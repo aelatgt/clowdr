@@ -2,23 +2,31 @@ import type { BoxProps } from "@chakra-ui/react";
 import React, { useMemo } from "react";
 import { Permission_Enum } from "../../generated/graphql";
 import RequireAtLeastOnePermissionWrapper from "../Conference/RequireAtLeastOnePermissionWrapper";
+import { useConferenceCurrentUserActivePermissions } from "../Conference/useConferenceCurrentUserActivePermissions";
 import { useMaybeCurrentAttendee } from "../Conference/useCurrentAttendee";
 import { useRestorableState } from "../Generic/useRestorableState";
-import { ChatConfiguration, ChatConfigurationProvider, ChatSources, ChatSpacing } from "./Configuration";
+import type { ChatState } from "./ChatGlobalState";
+import { ChatConfiguration, ChatConfigurationProvider, ChatSpacing } from "./Configuration";
 import { ChatFrame } from "./Frame/ChatFrame";
-import ReflectionInfoModalProvider from "./ReflectionInfoModal";
-import { SelectedChatProvider } from "./SelectedChat";
 import type { EmoteMessageData } from "./Types/Messages";
 
 export interface ChatProps {
-    sources: ChatSources;
+    customHeadingElements?: React.ReactNodeArray;
+    chat: ChatState;
 
     onProfileModalOpened?: (attendeeId: string, close: () => void) => void;
     onEmoteReceived?: (emote: EmoteMessageData) => void;
 }
 
-export function Chat({ sources, onProfileModalOpened, onEmoteReceived, ...rest }: ChatProps & BoxProps): JSX.Element {
+export function Chat({
+    customHeadingElements,
+    chat,
+    onProfileModalOpened,
+    onEmoteReceived,
+    ...rest
+}: ChatProps & BoxProps): JSX.Element {
     const currentAttendee = useMaybeCurrentAttendee();
+    const currentPermissions = useConferenceCurrentUserActivePermissions();
     const [spacing, setSpacing] = useRestorableState<ChatSpacing>(
         "clowdr-chatSpacing",
         ChatSpacing.COMFORTABLE,
@@ -33,9 +41,17 @@ export function Chat({ sources, onProfileModalOpened, onEmoteReceived, ...rest }
     );
     const fontSizeMin = 10;
     const fontSizeMax = 28;
+    // TODO: This is a temporary hack
+    const canCompose =
+        chat.Name !== "Announcements" ||
+        currentPermissions.has(Permission_Enum.ConferenceManageAttendees) ||
+        currentPermissions.has(Permission_Enum.ConferenceModerateAttendees) ||
+        currentPermissions.has(Permission_Enum.ConferenceManageSchedule);
     const config = useMemo<ChatConfiguration>(
         () => ({
-            sources,
+            customHeadingElements,
+
+            state: chat,
             fontSizeRange: {
                 min: fontSizeMin,
                 max: fontSizeMax,
@@ -47,13 +63,13 @@ export function Chat({ sources, onProfileModalOpened, onEmoteReceived, ...rest }
                 // TODO: Disable certain permissions for during broadcast
                 // TODO: Enable certain permissions only if creator or admin
 
-                canMessage: true, // TODO
-                canEmote: true, // TODO
-                canReact: true, // TODO
-                canQuestion: true, // TODO
-                canAnswer: true, // TODO
-                canPoll: true, // TODO
-                canAnswerPoll: true, // TODO
+                canMessage: canCompose, // TODO
+                canEmote: canCompose, // TODO
+                canReact: canCompose, // TODO
+                canQuestion: canCompose, // TODO
+                canAnswer: canCompose, // TODO
+                canPoll: canCompose, // TODO
+                canAnswerPoll: canCompose, // TODO
 
                 canPin: true,
                 canUnpin: true,
@@ -82,14 +98,14 @@ export function Chat({ sources, onProfileModalOpened, onEmoteReceived, ...rest }
                     min: 1,
                     max: 1120,
                 },
-                sendCooloffPeriodMs: 2000,
+                sendCooloffPeriodMs: 0,
                 editTimeoutSeconds: 60, // Allow 60s to start editing a sent message before locking out
                 showProfilePictures: true,
                 showPlaceholderProfilePictures: true,
                 enableProfileModal: true,
             },
             emoteConfig: {
-                sendCooloffPeriodMs: 10000,
+                sendCooloffPeriodMs: 3000,
                 editTimeoutSeconds: 0, // Once an emote is sent, don't allow it to be edited
             },
             reactionConfig: {
@@ -103,7 +119,7 @@ export function Chat({ sources, onProfileModalOpened, onEmoteReceived, ...rest }
                     min: 10,
                     max: 1120,
                 },
-                sendCooloffPeriodMs: 10000,
+                sendCooloffPeriodMs: 5000,
                 editTimeoutSeconds: 30, // Allow 30s to start editing a sent message before locking out
             },
             answerConfig: {
@@ -115,7 +131,7 @@ export function Chat({ sources, onProfileModalOpened, onEmoteReceived, ...rest }
                 editTimeoutSeconds: 0, // Do not allow editing of answers
             },
             pollConfig: {
-                sendCooloffPeriodMs: 20000,
+                sendCooloffPeriodMs: 10000,
                 editTimeoutSeconds: 60, // Allow 60s to start editing a sent message before locking out
                 questionLength: {
                     min: 10,
@@ -138,33 +154,32 @@ export function Chat({ sources, onProfileModalOpened, onEmoteReceived, ...rest }
                 setFontSize((old) =>
                     Math.min(fontSizeMax, Math.max(fontSizeMin, typeof next === "function" ? next(old) : next))
                 ),
-            messageBatchSize: 20,
-            messageLiveBatchSize: 20,
+            messageBatchSize: 30,
             onProfileModalOpened,
             onEmoteReceived,
         }),
         [
+            canCompose,
+            chat,
             currentAttendee?.displayName,
             currentAttendee?.id,
+            customHeadingElements,
             fontSize,
             onEmoteReceived,
             onProfileModalOpened,
             setFontSize,
             setSpacing,
-            sources,
             spacing,
         ]
     );
 
     return (
         <RequireAtLeastOnePermissionWrapper permissions={[Permission_Enum.ConferenceViewAttendees]}>
-            <ReflectionInfoModalProvider>
-                <ChatConfigurationProvider config={config}>
-                    <SelectedChatProvider>
-                        <ChatFrame {...rest} />
-                    </SelectedChatProvider>
-                </ChatConfigurationProvider>
-            </ReflectionInfoModalProvider>
+            {/* <ReflectionInfoModalProvider> */}
+            <ChatConfigurationProvider config={config}>
+                <ChatFrame {...rest} />
+            </ChatConfigurationProvider>
+            {/* </ReflectionInfoModalProvider> */}
         </RequireAtLeastOnePermissionWrapper>
     );
 }

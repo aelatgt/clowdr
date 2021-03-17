@@ -1,7 +1,14 @@
 import { gql } from "@apollo/client/core";
+import {
+    ConferenceConfigurationKey,
+    EmailTemplate_BaseConfig,
+    isEmailTemplate_BaseConfig,
+} from "@clowdr-app/shared-types/build/conferenceConfiguration";
 import { AWSJobStatus } from "@clowdr-app/shared-types/build/content";
+import { EmailView_SubtitlesGenerated, EMAIL_TEMPLATE_SUBTITLES_GENERATED } from "@clowdr-app/shared-types/build/email";
 import assert from "assert";
 import { htmlToText } from "html-to-text";
+import Mustache from "mustache";
 import R from "ramda";
 import {
     ContentItemAddNewVersionDocument,
@@ -13,6 +20,7 @@ import {
     GetUploadersForContentItemDocument,
 } from "../generated/graphql";
 import { apolloClient } from "../graphqlClient";
+import { getConferenceConfiguration } from "../lib/conferenceConfiguration";
 import { startPreviewTranscode } from "../lib/transcode";
 import { startTranscribe } from "../lib/transcribe";
 import { ContentItemData, Payload } from "../types/hasura/event";
@@ -51,8 +59,13 @@ export async function handleContentItemUpdated(payload: Payload<ContentItemData>
 
     // If there is a new video source URL, start transcoding
     if (
-        (oldVersion && oldVersion.data.baseType === "video" && oldVersion.data.s3Url !== currentVersion.data.s3Url) ||
-        (!oldVersion && currentVersion.data.s3Url)
+        ((oldVersion && oldVersion.data.baseType === "video" && oldVersion.data.s3Url !== currentVersion.data.s3Url) ||
+            (oldVersion &&
+                oldVersion.data.baseType === "video" &&
+                oldVersion.data.transcode &&
+                !currentVersion.data.transcode) ||
+            (!oldVersion && currentVersion.data.s3Url)) &&
+        (!currentVersion.data.transcode || currentVersion.data.transcode.updatedTimestamp < currentVersion.createdAt)
     ) {
         const transcodeResult = await startPreviewTranscode(currentVersion.data.s3Url, newRow.id);
 
@@ -86,8 +99,9 @@ export async function handleContentItemUpdated(payload: Payload<ContentItemData>
         (oldVersion &&
             oldVersion.data.baseType === "video" &&
             currentVersion.data.transcode?.s3Url &&
+            !currentVersion.data.sourceHasEmbeddedSubtitles &&
             oldVersion.data.transcode?.s3Url !== currentVersion.data.transcode.s3Url) ||
-        (!oldVersion && currentVersion.data.transcode?.s3Url)
+        (!oldVersion && currentVersion.data.transcode?.s3Url && !currentVersion.data.subtitles["en_US"]?.s3Url)
     ) {
         await startTranscribe(currentVersion.data.transcode.s3Url, newRow.id);
     }
@@ -101,7 +115,7 @@ export async function handleContentItemUpdated(payload: Payload<ContentItemData>
     ) {
         // Send email if new machine-generated subtitles have been added
         if (currentVersion.createdBy === "system") {
-            await sendTranscriptionEmail(newRow.id, newRow.name);
+            await trySendTranscriptionEmail(newRow.id);
         }
     }
 
@@ -111,7 +125,7 @@ export async function handleContentItemUpdated(payload: Payload<ContentItemData>
         oldVersion.data.subtitles["en_US"]?.status !== "FAILED" &&
         currentVersion.data.subtitles["en_US"]?.status === "FAILED"
     ) {
-        await sendTranscriptionFailedEmail(newRow.id, newRow.name);
+        await trySendTranscriptionFailedEmail(newRow.id, newRow.name);
     }
 
     if (
@@ -121,7 +135,7 @@ export async function handleContentItemUpdated(payload: Payload<ContentItemData>
             currentVersion.data.transcode?.status === "FAILED") ||
         (!oldVersion && currentVersion.data.transcode?.status === "FAILED")
     ) {
-        await sendTranscodeFailedEmail(
+        await trySendTranscodeFailedEmail(
             newRow.id,
             newRow.name,
             currentVersion.data.transcode.message ?? "No details available."
@@ -133,10 +147,14 @@ gql`
     query GetContentItemDetails($contentItemId: uuid!) {
         ContentItem_by_pk(id: $contentItemId) {
             id
+            name
             conference {
+                id
                 name
+                shortName
             }
             contentGroup {
+                id
                 title
             }
         }
@@ -157,65 +175,100 @@ gql`
     }
 `;
 
-async function sendTranscriptionEmail(contentItemId: string, contentItemName: string) {
-    const contentItemDetails = await apolloClient.query({
-        query: GetContentItemDetailsDocument,
-        variables: {
-            contentItemId,
-        },
-    });
+async function trySendTranscriptionEmail(contentItemId: string) {
+    try {
+        const contentItemDetails = await apolloClient.query({
+            query: GetContentItemDetailsDocument,
+            variables: {
+                contentItemId,
+            },
+        });
 
-    const uploaders = await apolloClient.query({
-        query: GetUploadersForContentItemDocument,
-        variables: {
-            contentItemId,
-        },
-    });
+        const uploaders = await apolloClient.query({
+            query: GetUploadersForContentItemDocument,
+            variables: {
+                contentItemId,
+            },
+        });
 
-    const requiredContentItemResult = await apolloClient.query({
-        query: GetRequiredContentItemDocument,
-        variables: {
-            contentItemId,
-        },
-    });
+        const requiredContentItemResult = await apolloClient.query({
+            query: GetRequiredContentItemDocument,
+            variables: {
+                contentItemId,
+            },
+        });
 
-    if (requiredContentItemResult.data.RequiredContentItem.length !== 1) {
-        // TODO: handle the >1 case
-        console.error(`Could not find a single required item for content item ${contentItemId}`);
-        return;
-    }
+        if (requiredContentItemResult.data.RequiredContentItem.length !== 1) {
+            // TODO: handle the >1 case
+            throw new Error(
+                `Could not find a single required item (found ${requiredContentItemResult.data.RequiredContentItem.length}) for content item`
+            );
+        }
 
-    const requiredContentItem = requiredContentItemResult.data.RequiredContentItem[0];
+        const requiredContentItem = requiredContentItemResult.data.RequiredContentItem[0];
 
-    const magicItemLink = `${process.env.FRONTEND_PROTOCOL}://${process.env.FRONTEND_DOMAIN}/upload/${requiredContentItem.id}/${requiredContentItem.accessToken}`;
+        const contentItem = contentItemDetails.data.ContentItem_by_pk;
+        if (!contentItem) {
+            throw new Error("Could not find ContentItem while sending");
+        }
 
-    const emails: Email_Insert_Input[] = uploaders.data.Uploader.map((uploader) => {
-        const htmlContents = `<p>Dear ${uploader.name},</p>
-<p>We have automatically generated subtitles for your item <em>${contentItemName}</em> (${contentItemDetails.data.ContentItem_by_pk?.contentGroup.title}) at ${contentItemDetails.data.ContentItem_by_pk?.conference.name}.</p>
-<p>We kindly request that you now review and edit them, as we know automated subtitles aren't always accurate.</p>
-<p><a href="${magicItemLink}">View and edit subtitles on this page</a></p>
-<p><b>The deadline for editing subtitles is 12:00 UTC on 6th January 2021.</b></p>
-<p>After this time, subtitles will be automatically embedded into the video files and moved into the content delivery system - they will no longer be editable.</p>
-<p>Thank you,<br/>
-The Clowdr team
-</p>
+        const magicItemLink = `${process.env.FRONTEND_PROTOCOL}://${process.env.FRONTEND_DOMAIN}/upload/${requiredContentItem.id}/${requiredContentItem.accessToken}`;
+
+        let emailTemplates: EmailTemplate_BaseConfig | null = await getConferenceConfiguration(
+            contentItem.conference.id,
+            ConferenceConfigurationKey.EmailTemplate_SubtitlesGenerated
+        );
+
+        if (!isEmailTemplate_BaseConfig(emailTemplates)) {
+            emailTemplates = null;
+        }
+
+        const emails: Email_Insert_Input[] = uploaders.data.Uploader.map((uploader) => {
+            const view: EmailView_SubtitlesGenerated = {
+                uploader,
+                file: {
+                    name: contentItem.name,
+                },
+                conference: {
+                    name: contentItem.conference.name,
+                    shortName: contentItem.conference.shortName,
+                },
+                item: {
+                    title: contentItem.contentGroup.title,
+                },
+                uploadLink: magicItemLink,
+            };
+
+            const htmlBody = Mustache.render(
+                emailTemplates?.htmlBodyTemplate ?? EMAIL_TEMPLATE_SUBTITLES_GENERATED.htmlBodyTemplate,
+                view
+            );
+            const subject = Mustache.render(
+                emailTemplates?.subjectTemplate ?? EMAIL_TEMPLATE_SUBTITLES_GENERATED.subjectTemplate,
+                view
+            );
+            const htmlContents = `${htmlBody}
 <p>You are receiving this email because you are listed as an uploader for this item.
 This is an automated email sent on behalf of Clowdr CIC. If you believe you have received this
 email in error, please contact us via ${process.env.STOP_EMAILS_CONTACT_EMAIL_ADDRESS}.</p>`;
 
-        return {
-            emailAddress: uploader.email,
-            reason: "item_transcription_succeeded",
-            subject: `Clowdr: Submission SUCCESS: Subtitles generated for ${contentItemName} at ${contentItemDetails.data.ContentItem_by_pk?.conference.name}`,
-            htmlContents,
-            plainTextContents: htmlToText(htmlContents),
-        };
-    });
+            return {
+                emailAddress: uploader.email,
+                reason: "item_transcription_succeeded",
+                subject,
+                htmlContents,
+                plainTextContents: htmlToText(htmlContents),
+            };
+        });
 
-    await insertEmails(emails);
+        await insertEmails(emails);
+    } catch (e) {
+        console.error("Error while sending transcription emails", contentItemId, e);
+        return;
+    }
 }
 
-async function sendTranscriptionFailedEmail(contentItemId: string, contentItemName: string) {
+async function trySendTranscriptionFailedEmail(contentItemId: string, contentItemName: string) {
     const contentItemDetails = await apolloClient.query({
         query: GetContentItemDetailsDocument,
         variables: {
@@ -288,7 +341,7 @@ email in error, please contact us via ${process.env.STOP_EMAILS_CONTACT_EMAIL_AD
     await insertEmails(emails);
 }
 
-async function sendTranscodeFailedEmail(contentItemId: string, contentItemName: string, message: string) {
+async function trySendTranscodeFailedEmail(contentItemId: string, contentItemName: string, message: string) {
     const contentItemDetails = await apolloClient.query({
         query: GetContentItemDetailsDocument,
         variables: {

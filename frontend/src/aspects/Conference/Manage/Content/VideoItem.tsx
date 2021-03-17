@@ -1,10 +1,14 @@
+import { Heading } from "@chakra-ui/react";
 import { ContentBaseType, ContentItemVersionData } from "@clowdr-app/shared-types/build/content";
 import assert from "assert";
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
 import { ContentType_Enum } from "../../../../generated/graphql";
 import { ContentGroupVideo } from "../../Attend/Content/ContentGroupVideos";
-import type { ItemBaseTemplate } from "./Types";
+import { RefreshSubtitles } from "./RefreshSubtitles";
+import type { ItemBaseTemplate, RenderEditorProps } from "./Types";
+import UploadFileForm_ContentItem from "./UploadFileForm_ContentItem";
+import UploadFileForm_Subtitles from "./UploadFileForm_Subtitles";
 
 function createDefaultVideo(
     type:
@@ -30,7 +34,7 @@ function createDefaultVideo(
 
 export const VideoItemTemplate: ItemBaseTemplate = {
     supported: true,
-    createDefault: (group, type, required) => {
+    createDefault: (type, required) => {
         assert(
             type === ContentType_Enum.VideoBroadcast ||
                 type === ContentType_Enum.VideoCountdown ||
@@ -78,23 +82,26 @@ export const VideoItemTemplate: ItemBaseTemplate = {
                     typeName: type,
                     isHidden: false,
                     data: [],
-                    layoutData: {},
+                    layoutData: null,
                 },
             };
         }
     },
-    renderEditor: function VideoItemEditor(data, update) {
+    renderEditor: function VideoItemEditor({ data, update }: RenderEditorProps) {
         if (data.type === "item-only" || data.type === "required-and-item") {
-            assert(
-                data.item.typeName === ContentType_Enum.VideoBroadcast ||
+            if (
+                !(
+                    data.item.typeName === ContentType_Enum.VideoBroadcast ||
                     data.item.typeName === ContentType_Enum.VideoCountdown ||
                     data.item.typeName === ContentType_Enum.VideoFile ||
                     data.item.typeName === ContentType_Enum.VideoFiller ||
                     data.item.typeName === ContentType_Enum.VideoPrepublish ||
                     data.item.typeName === ContentType_Enum.VideoSponsorsFiller ||
-                    data.item.typeName === ContentType_Enum.VideoTitles,
-                `Video Item Template mistakenly used for type ${data.type}.`
-            );
+                    data.item.typeName === ContentType_Enum.VideoTitles
+                )
+            ) {
+                return <>Video Item Template mistakenly used for type {data.type}.</>;
+            }
 
             if (data.item.data.length === 0) {
                 data = {
@@ -108,13 +115,48 @@ export const VideoItemTemplate: ItemBaseTemplate = {
             }
 
             const latestVersion = data.item.data[data.item.data.length - 1];
-            assert(
-                latestVersion.data.baseType === ContentBaseType.Video,
-                `Video Item Template mistakenly used for base type ${latestVersion.data.baseType}.`
-            );
+            if (latestVersion.data.baseType !== ContentBaseType.Video) {
+                return <>Video Item Template mistakenly used for base type {latestVersion.data.baseType}.</>;
+            }
             return (
                 <>
                     <ContentGroupVideo title={data.item.name} videoContentItemData={latestVersion.data} />
+                    <Heading as="h3" fontSize="lg" mb={4}>
+                        Upload new video
+                    </Heading>
+                    <UploadFileForm_ContentItem
+                        allowedFileTypes={["video/mp4", "video/webm"]}
+                        item={data.item}
+                        onItemChange={(newItem) => {
+                            const newData = {
+                                ...data,
+                                item: newItem,
+                            };
+                            update(newData);
+                        }}
+                        contentBaseType={ContentBaseType.Video}
+                    />
+                    <UploadFileForm_Subtitles
+                        item={data.item}
+                        onItemChange={(newItem) => {
+                            const newData = {
+                                ...data,
+                                item: newItem,
+                            };
+                            update(newData);
+                        }}
+                        contentBaseType={ContentBaseType.Video}
+                    />
+                    <RefreshSubtitles
+                        item={data.item}
+                        onItemChange={(newItem) => {
+                            const newData = {
+                                ...data,
+                                item: newItem,
+                            };
+                            update(newData);
+                        }}
+                    />
                 </>
             );
         }

@@ -78,10 +78,13 @@ type ProfilePhotoURLResponse = {
 
 type UpdateProfilePhotoResponse = {
     ok: boolean;
+    photoURL_350x350: string | undefined | null;
+    photoURL_50x50: string | undefined | null;
 };
 
 type CreateRoomDmOutput = {
     roomId?: Maybe<uuid>;
+    chatId?: Maybe<uuid>;
     message?: Maybe<string>;
 };
 
@@ -92,6 +95,25 @@ type CreateContentGroupRoomOutput = {
 
 type StopEventBroadcastOutput = {
     broadcastsStopped: number;
+};
+
+type GetGoogleOAuthUrlOutput = {
+    url: string;
+};
+
+type SubmitGoogleOAuthTokenOutput = {
+    success: boolean;
+    message?: Maybe<string>;
+};
+
+type SubmitGoogleOAuthCodeOutput = {
+    success: boolean;
+    message?: Maybe<string>;
+};
+
+type RefreshYouTubeDataOutput = {
+    success: boolean;
+    message?: Maybe<string>;
 };
 
 type SampleInput = {
@@ -132,14 +154,17 @@ type Query = {
 type Mutation = {
     createContentGroupRoom?: Maybe<CreateContentGroupRoomOutput>;
     createRoomDm?: Maybe<CreateRoomDmOutput>;
+    getGoogleOAuthUrl?: Maybe<GetGoogleOAuthUrlOutput>;
     invitationConfirmCurrent?: Maybe<ConfirmInvitationOutput>;
     invitationConfirmSendInitialEmail?: Maybe<InvitationConfirmationEmailOutput>;
     invitationConfirmSendRepeatEmail?: Maybe<InvitationConfirmationEmailOutput>;
     invitationConfirmWithCode?: Maybe<ConfirmInvitationOutput>;
     joinEventVonageSession?: Maybe<JoinEventVonageSessionOutput>;
     joinRoomVonageSession?: Maybe<JoinRoomVonageSessionOutput>;
+    refreshYouTubeData?: Maybe<RefreshYouTubeDataOutput>;
     stopEventBroadcast?: Maybe<StopEventBroadcastOutput>;
     submitContentItem?: Maybe<SubmitContentItemOutput>;
+    submitGoogleOAuthCode?: Maybe<SubmitGoogleOAuthCodeOutput>;
     updateProfilePhoto?: Maybe<UpdateProfilePhotoResponse>;
     updateSubtitles?: Maybe<SubmitUpdatedSubtitlesOutput>;
 };
@@ -170,6 +195,10 @@ type createRoomDmArgs = {
     attendeeIds: Array<uuid>;
 };
 
+type getGoogleOAuthUrlArgs = {
+    scopes: Array<string>;
+};
+
 type invitationConfirmCurrentArgs = {
     inviteCode: uuid;
 };
@@ -194,6 +223,10 @@ type joinRoomVonageSessionArgs = {
     roomId: uuid;
 };
 
+type refreshYouTubeDataArgs = {
+    attendeeGoogleAccountId: uuid;
+};
+
 type stopEventBroadcastArgs = {
     eventId: uuid;
 };
@@ -201,6 +234,11 @@ type stopEventBroadcastArgs = {
 type submitContentItemArgs = {
     data: jsonb;
     magicToken: string;
+};
+
+type submitGoogleOAuthCodeArgs = {
+    code: string;
+    state: string;
 };
 
 type updateProfilePhotoArgs = {

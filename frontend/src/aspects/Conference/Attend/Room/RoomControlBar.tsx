@@ -1,176 +1,42 @@
 import { gql } from "@apollo/client";
 import {
-    Badge,
+    Box,
     Button,
     HStack,
     List,
     ListItem,
-    Popover,
-    PopoverArrow,
-    PopoverBody,
-    PopoverCloseButton,
-    PopoverContent,
-    PopoverHeader,
-    PopoverTrigger,
-    Portal,
-    Spinner,
-    Tooltip,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalHeader,
+    ModalOverlay,
+    Text,
     useDisclosure,
 } from "@chakra-ui/react";
 import React, { useMemo } from "react";
-import { RoomPage_RoomDetailsFragment, RoomPersonRole_Enum, RoomPrivacy_Enum } from "../../../../generated/graphql";
+import { RoomPage_RoomDetailsFragment, RoomPersonRole_Enum } from "../../../../generated/graphql";
+import { LinkButton } from "../../../Chakra/LinkButton";
 import FAIcon from "../../../Icons/FAIcon";
+import RoomMembersProvider from "../../../Room/RoomMembersProvider";
 import useRoomMembers from "../../../Room/useRoomMembers";
-import useRoomParticipants from "../../../Room/useRoomParticipants";
 import useCurrentUser from "../../../Users/CurrentUser/useCurrentUser";
 import { maybeCompare } from "../../../Utils/maybeSort";
-import { useAttendee } from "../../AttendeesContext";
+import { useConference } from "../../useConference";
 import { AddRoomPersonModal } from "./AddRoomPersonModal";
 
-export function RoomControlBar({
-    roomDetails,
-    onSetBackstage,
-    backstage,
-    hasBackstage,
-    breakoutRoomEnabled,
-}: {
-    roomDetails: RoomPage_RoomDetailsFragment;
-    onSetBackstage: (backstage: boolean) => void;
-    backstage: boolean;
-    hasBackstage: boolean;
-    breakoutRoomEnabled: boolean;
-}): JSX.Element {
-    const user = useCurrentUser();
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const roomMembers = useRoomMembers();
-    const roomParticipants = useRoomParticipants();
-
-    const thisRoomParticipants = useMemo(
-        () => (roomParticipants ? roomParticipants.filter((participant) => participant.roomId === roomDetails.id) : []),
-        [roomDetails.id, roomParticipants]
-    );
-
-    const roomMembersList = useMemo(
-        () => (
-            <List>
-                {roomMembers ? (
-                    roomMembers
-                        .sort((x, y) =>
-                            maybeCompare(x.attendee, y.attendee, (a, b) => a.displayName.localeCompare(b.displayName))
-                        )
-                        .map((person) => (
-                            <ListItem key={person.member.id}>
-                                <FAIcon
-                                    icon={
-                                        thisRoomParticipants &&
-                                        thisRoomParticipants.find(
-                                            (participant) => person.member.attendeeId === participant.attendeeId
-                                        )
-                                            ? "video"
-                                            : "user"
-                                    }
-                                    iconStyle="s"
-                                    mr={5}
-                                />
-                                {person.attendee?.displayName ?? "<Loading name>"}
-                            </ListItem>
-                        ))
-                ) : (
-                    <></>
-                )}
-            </List>
-        ),
-        [roomMembers, thisRoomParticipants]
-    );
-
-    const roomParticipantsList = useMemo(
-        () => (
-            <List>
-                {thisRoomParticipants ? (
-                    thisRoomParticipants.map((participant) => (
-                        <RoomParticipantListItem key={participant.id} attendeeId={participant.attendeeId} />
-                    ))
-                ) : (
-                    <></>
-                )}
-            </List>
-        ),
-        [thisRoomParticipants]
-    );
+export function RoomControlBar({ roomDetails }: { roomDetails: RoomPage_RoomDetailsFragment }): JSX.Element {
+    const listModal = useDisclosure();
 
     return (
-        <HStack justifyContent="flex-end" m={4}>
-            {hasBackstage && !breakoutRoomEnabled ? (
-                backstage ? (
-                    <Button size="sm" colorScheme="red" onClick={() => onSetBackstage(false)}>
-                        View stream
-                    </Button>
-                ) : (
-                    <Tooltip label="Authors click here to join the stream and answer questions live.">
-                        <Button colorScheme="green" onClick={() => onSetBackstage(true)}>
-                            Join stream
-                        </Button>
-                    </Tooltip>
-                )
-            ) : (
-                <></>
-            )}
-            {roomDetails.roomPeople.find(
-                (person) =>
-                    user.user.attendees.find((myAttendee) => myAttendee.id === person.attendeeId) &&
-                    person.roomPersonRoleName === RoomPersonRole_Enum.Admin
-            ) ? (
-                <Button colorScheme="green" aria-label="Add people to room" title="Add people to room" onClick={onOpen}>
-                    <FAIcon icon="plus" iconStyle="s" mr={3} />
-                    Add people
-                </Button>
-            ) : (
-                <></>
-            )}
-            {!breakoutRoomEnabled ? (
-                <></>
-            ) : roomDetails.roomPrivacyName === RoomPrivacy_Enum.Public ? (
-                <Popover>
-                    <PopoverTrigger>
-                        <Button
-                            aria-label={`${
-                                thisRoomParticipants ? thisRoomParticipants.length : "0"
-                            } People currently in the breakout room`}
-                        >
-                            <FAIcon icon="users" iconStyle="s" />
-                            <Badge ml={2}>{thisRoomParticipants ? thisRoomParticipants.length : "0"} </Badge>
-                        </Button>
-                    </PopoverTrigger>
-                    <Portal>
-                        <PopoverContent>
-                            <PopoverArrow />
-                            <PopoverHeader>Breakout Participants</PopoverHeader>
-                            <PopoverCloseButton />
-                            <PopoverBody>{roomParticipantsList}</PopoverBody>
-                        </PopoverContent>
-                    </Portal>
-                </Popover>
-            ) : (
-                <Popover>
-                    <PopoverTrigger>
-                        <Button aria-label="Members of this room" title="Members of this room">
-                            <FAIcon icon="users" iconStyle="s" />
-                            <Badge ml={2}>
-                                {roomMembers ? roomMembers.length : <Spinner label="Loading members" size="sm" />}{" "}
-                            </Badge>
-                        </Button>
-                    </PopoverTrigger>
-                    <Portal>
-                        <PopoverContent>
-                            <PopoverArrow />
-                            <PopoverHeader>Room Members</PopoverHeader>
-                            <PopoverCloseButton />
-                            <PopoverBody>{roomMembersList}</PopoverBody>
-                        </PopoverContent>
-                    </Portal>
-                </Popover>
-            )}
-            <AddRoomPersonModal roomId={roomDetails.id} isOpen={isOpen} onClose={onClose} />
+        <HStack justifyContent="flex-end">
+            <Button aria-label="Members of this room" title="Members of this room" onClick={listModal.onOpen} size="sm">
+                <>
+                    <FAIcon icon="users" iconStyle="s" mr={3} />
+                    <Text>Members</Text>
+                </>
+            </Button>
+            <RoomMembersModal isOpen={listModal.isOpen} onClose={listModal.onClose} roomDetails={roomDetails} />
         </HStack>
     );
 }
@@ -183,12 +49,99 @@ gql`
     }
 `;
 
-function RoomParticipantListItem({ attendeeId }: { attendeeId: string }): JSX.Element {
-    const attendee = useAttendee(attendeeId);
+function RoomMembersModal({
+    isOpen,
+    onClose,
+    roomDetails,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    roomDetails: RoomPage_RoomDetailsFragment;
+}): JSX.Element {
     return (
-        <ListItem>
-            <FAIcon icon="video" iconStyle="s" mr={5} />
-            {attendee?.displayName ?? "<Loading name>"}
-        </ListItem>
+        <Modal scrollBehavior="inside" isOpen={isOpen} onClose={onClose} size="md">
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader>
+                    Room members <ModalCloseButton />
+                </ModalHeader>
+                <ModalBody>
+                    <RoomMembersProvider roomId={roomDetails.id}>
+                        <RoomMembersModalInner roomDetails={roomDetails} />
+                    </RoomMembersProvider>
+                </ModalBody>
+            </ModalContent>
+        </Modal>
+    );
+}
+
+function RoomMembersModalInner({ roomDetails }: { roomDetails: RoomPage_RoomDetailsFragment }): JSX.Element {
+    const roomMembers = useRoomMembers();
+    const conference = useConference();
+    const addMemberModal = useDisclosure();
+    const user = useCurrentUser();
+
+    const roomMembersList = useMemo(
+        () => (
+            <List mb={2} spacing={2} maxH="40vh" overflowY="auto">
+                {roomMembers ? (
+                    roomMembers
+                        .sort((x, y) =>
+                            maybeCompare(x.attendee, y.attendee, (a, b) => a.displayName.localeCompare(b.displayName))
+                        )
+                        .map((person) => (
+                            <ListItem key={person.member.id} whiteSpace="normal">
+                                <LinkButton
+                                    justifyContent="flex-start"
+                                    to={`/conference/${conference.slug}/profile/view/${person.attendee?.id}`}
+                                    size="sm"
+                                    linkProps={{ width: "100%" }}
+                                    w="100%"
+                                >
+                                    <>
+                                        <FAIcon icon="user" iconStyle="s" mr={5} />
+                                        <Text>{person.attendee?.displayName ?? "<Loading name>"}</Text>
+                                    </>
+                                </LinkButton>
+                            </ListItem>
+                        ))
+                ) : (
+                    <></>
+                )}
+            </List>
+        ),
+        [conference.slug, roomMembers]
+    );
+
+    return (
+        <>
+            <AddRoomPersonModal
+                roomId={roomDetails.id}
+                isOpen={addMemberModal.isOpen}
+                onClose={addMemberModal.onClose}
+            />
+            {roomMembersList}
+            {roomDetails.roomPeople.find(
+                (person) =>
+                    user.user.attendees.find((myAttendee) => myAttendee.id === person.attendeeId) &&
+                    person.roomPersonRoleName === RoomPersonRole_Enum.Admin
+            ) ? (
+                <Box textAlign="right" mb={2}>
+                    <Button
+                        mt={2}
+                        size="sm"
+                        colorScheme="green"
+                        aria-label="Add people to room"
+                        title="Add people to room"
+                        onClick={addMemberModal.onOpen}
+                    >
+                        <FAIcon icon="plus" iconStyle="s" mr={3} />
+                        Add people
+                    </Button>
+                </Box>
+            ) : (
+                <></>
+            )}
+        </>
     );
 }

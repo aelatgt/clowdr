@@ -9,13 +9,19 @@ export function SharedRoomContextProvider({
     children: string | React.ReactNodeArray | React.ReactNode;
 }): JSX.Element {
     const roomNode = useMemo(() => portals.createHtmlPortalNode(), []);
+    const ctx = useMemo(() => ({ portalNode: roomNode }), [roomNode]);
 
     return (
         <>
             <portals.InPortal node={roomNode}>
-                <VonageRoom getAccessToken={async () => ""} vonageSessionId="" disable={false} />
+                <VonageRoom
+                    getAccessToken={async () => ""}
+                    vonageSessionId=""
+                    disable={false}
+                    isBackstageRoom={false}
+                />
             </portals.InPortal>
-            <SharedRoomContext.Provider value={{ portalNode: roomNode }}>{children}</SharedRoomContext.Provider>
+            <SharedRoomContext.Provider value={ctx}>{children}</SharedRoomContext.Provider>
         </>
     );
 }

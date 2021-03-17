@@ -1,11 +1,13 @@
-import { Box, Flex, Heading, Spinner } from "@chakra-ui/react";
+import { Box, Flex, Heading, Spinner, Text } from "@chakra-ui/react";
 import { assertIsContentItemDataBlob, VideoContentBlob } from "@clowdr-app/shared-types/build/content";
 import { WebVTTConverter } from "@clowdr-app/srt-webvtt";
 import AmazonS3URI from "amazon-s3-uri";
+import type Hls from "hls.js";
 import * as R from "ramda";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useAsync } from "react-async-hook";
-import ReactPlayer, { Config, TrackProps } from "react-player";
+import ReactPlayer, { Config } from "react-player";
+import type { TrackProps } from "react-player/file";
 import { ContentGroupDataFragment, ContentType_Enum } from "../../../../generated/graphql";
 import usePolling from "../../../Generic/usePolling";
 
@@ -47,7 +49,8 @@ export function ContentGroupVideos({ contentGroupData }: { contentGroupData: Con
                                 ]}
                                 flexBasis={0}
                                 mx={5}
-                                my={3}
+                                mt={3}
+                                mb={5}
                                 visibility={[
                                     "visible",
                                     "visible",
@@ -74,15 +77,14 @@ export function ContentGroupVideos({ contentGroupData }: { contentGroupData: Con
             });
     }, [contentGroupData.contentItems, slowSelectedVideoId]);
     return videoContentItems.length === 0 ? (
-        <>(This item does not have any videos at the moment.)</>
+        <></>
     ) : (
         <Flex
             justifyContent={["flex-start", "flex-start", "center"]}
             alignItems="center"
             background="gray.900"
             borderRadius={5}
-            py={5}
-            minH={["0", "0", "80vh"]}
+            pb={5}
             flexDir={["column", "column", "row"]}
         >
             {videoContentItems}
@@ -142,7 +144,7 @@ export function ContentGroupVideo({
         }
     }, [videoContentItemData.subtitles["en_US"]]);
 
-    const subtitlesConfig = useMemo<Config | null>(() => {
+    const config = useMemo<Config | null>(() => {
         if (loading) {
             return null;
         }
@@ -153,45 +155,66 @@ export function ContentGroupVideo({
             kind: "subtitles",
             src: subtitlesUrl,
             srcLang: "en",
-            default: true,
+            default: false,
             label: "English",
         };
         return {
             file: {
                 tracks: [track],
+                hlsVersion: "1.0.0-rc.4",
+                hlsOptions: {
+                    subtitleDisplay: false,
+                    maxBufferLength: 0.05,
+                    maxBufferSize: 500,
+                },
             },
         };
     }, [error, loading, subtitlesUrl]);
 
+    const playerRef = useRef<ReactPlayer | null>(null);
     const player = useMemo(() => {
         // Only render the player once both the video URL and the subtitles config are available
         // react-player memoizes internally and only re-renders if the url or key props change.
-        return !previewTranscodeUrl || !subtitlesConfig ? (
-            <Spinner />
-        ) : (
+        return !previewTranscodeUrl || !config ? undefined : (
             <ReactPlayer
                 url={previewTranscodeUrl}
                 controls={true}
                 width="100%"
                 height="auto"
                 maxHeight="100%"
-                onPlay={onPlay}
+                onPlay={() => {
+                    if (onPlay) {
+                        onPlay();
+                    }
+                    const hlsPlayer = playerRef.current?.getInternalPlayer("hls") as Hls;
+                    if (hlsPlayer) {
+                        hlsPlayer.config.maxBufferLength = 30;
+                        hlsPlayer.config.maxBufferSize = 60 * 1000 * 1000;
+                    }
+                }}
                 onPause={onPause}
-                config={subtitlesConfig}
+                config={{ ...config }}
+                ref={playerRef}
                 style={{ borderRadius: "10px", overflow: "hidden" }}
             />
         );
-    }, [onPause, onPlay, previewTranscodeUrl, subtitlesConfig]);
+    }, [onPause, onPlay, previewTranscodeUrl, config]);
 
     return (
         <>
-            <Heading as="h3" fontSize={24} mb={4} color="gray.50">
+            <Heading as="h3" fontSize="2xl" mb={2} color="gray.50">
                 {title === "Livestream broadcast video"
                     ? "Lightning talk"
                     : title === "Pre-published video"
                     ? "Presentation"
                     : title}
             </Heading>
+            {videoContentItemData.s3Url && (!previewTranscodeUrl || !config) ? (
+                <>
+                    <Spinner />
+                    <Text mb={2}>Video is still being processed.</Text>
+                </>
+            ) : undefined}
             {player}
         </>
     );

@@ -1,18 +1,16 @@
 import { gql } from "@apollo/client";
-import React, { useEffect } from "react";
+import React from "react";
 import {
     Permission_Enum,
     RoomPage_RoomDetailsFragment,
     useRoomPage_GetRoomDetailsQuery,
 } from "../../../../generated/graphql";
-import PageNotFound from "../../../Errors/PageNotFound";
+import ConferencePageNotFound from "../../../Errors/ConferencePageNotFound";
 import usePolling from "../../../Generic/usePolling";
 import ApolloQueryWrapper from "../../../GQL/ApolloQueryWrapper";
-import usePrimaryMenuButtons from "../../../Menu/usePrimaryMenuButtons";
-import RoomMembersProvider from "../../../Room/RoomMembersProvider";
+import { useNoPrimaryMenuButtons } from "../../../Menu/usePrimaryMenuButtons";
 import { useTitle } from "../../../Utils/useTitle";
 import RequireAtLeastOnePermissionWrapper from "../../RequireAtLeastOnePermissionWrapper";
-import { useConference } from "../../useConference";
 import { Room } from "./Room";
 
 gql`
@@ -37,7 +35,10 @@ gql`
             id
             contentGroupTypeName
             contentItems(
-                where: { contentTypeName: { _eq: IMAGE_URL }, layoutData: { _contains: { isLogo: true } } }
+                where: {
+                    contentTypeName: { _in: [IMAGE_URL, IMAGE_FILE] }
+                    layoutData: { _contains: { isLogo: true } }
+                }
                 limit: 1
                 order_by: { updatedAt: desc }
             ) {
@@ -66,6 +67,17 @@ gql`
 `;
 
 export default function RoomPage({ roomId }: { roomId: string }): JSX.Element {
+    return (
+        <RequireAtLeastOnePermissionWrapper
+            componentIfDenied={<ConferencePageNotFound />}
+            permissions={[Permission_Enum.ConferenceViewAttendees, Permission_Enum.ConferenceManageSchedule]}
+        >
+            <RoomPageInner roomId={roomId} />
+        </RequireAtLeastOnePermissionWrapper>
+    );
+}
+
+function RoomPageInner({ roomId }: { roomId: string }): JSX.Element {
     const result = useRoomPage_GetRoomDetailsQuery({
         variables: {
             roomId,
@@ -76,31 +88,15 @@ export default function RoomPage({ roomId }: { roomId: string }): JSX.Element {
 
     usePolling(result.refetch, 60000, true);
 
-    const conference = useConference();
-    const { setPrimaryMenuButtons } = usePrimaryMenuButtons();
-    useEffect(() => {
-        setPrimaryMenuButtons([
-            {
-                key: "conference-home",
-                action: `/conference/${conference.slug}`,
-                text: conference.shortName,
-                label: conference.shortName,
-            },
-        ]);
-    }, [conference.shortName, conference.slug, setPrimaryMenuButtons]);
+    useNoPrimaryMenuButtons();
 
     return (
-        <RequireAtLeastOnePermissionWrapper
-            componentIfDenied={<PageNotFound />}
-            permissions={[Permission_Enum.ConferenceViewAttendees, Permission_Enum.ConferenceManageSchedule]}
-        >
+        <>
             {title}
-            <RoomMembersProvider roomId={roomId}>
-                <ApolloQueryWrapper getter={(data) => data.Room_by_pk} queryResult={result}>
-                    {(room: RoomPage_RoomDetailsFragment) => <Room roomDetails={room} />}
-                </ApolloQueryWrapper>
-            </RoomMembersProvider>
-        </RequireAtLeastOnePermissionWrapper>
+            <ApolloQueryWrapper getter={(data) => data.Room_by_pk} queryResult={result}>
+                {(room: RoomPage_RoomDetailsFragment) => <Room roomDetails={room} />}
+            </ApolloQueryWrapper>
+        </>
     );
 }
 

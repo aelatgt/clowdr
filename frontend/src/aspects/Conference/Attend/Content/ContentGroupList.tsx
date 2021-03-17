@@ -18,6 +18,7 @@ import {
     VStack,
 } from "@chakra-ui/react";
 import React, { useEffect, useMemo, useState } from "react";
+import { Twemoji } from "react-emoji-render";
 import {
     ContentGroupList_ContentGroupDataFragment,
     ContentGroupList_ContentGroupTagDataFragment,
@@ -26,6 +27,7 @@ import {
     useTagsQuery,
 } from "../../../../generated/graphql";
 import { LinkButton } from "../../../Chakra/LinkButton";
+import { useRestorableState } from "../../../Generic/useRestorableState";
 import useQueryErrorToast from "../../../GQL/useQueryErrorToast";
 import FAIcon from "../../../Icons/FAIcon";
 import { useConference } from "../../useConference";
@@ -128,7 +130,7 @@ function ContentGroupButton({ group }: { group: ContentGroupList_ContentGroupDat
             height="100%"
         >
             <Text as="p" whiteSpace="normal" fontSize="1.2em" fontWeight="600" textAlign="left" mb={4}>
-                {group.title}
+                <Twemoji className="twemoji" text={group.title} />
             </Text>
             <Text as="p" fontSize="0.9em" textColor={textColour} whiteSpace="normal" lineHeight="3ex">
                 {[...group.people]
@@ -255,20 +257,13 @@ export default function ContentGroupList(): JSX.Element {
     });
     useQueryErrorToast(error, false, "ContentGroupList.tsx");
 
-    // const previousOpenPanelId = window.localStorage.getItem("ContentGroupList-OpenPanelId");
-    const [openPanelId, setOpenPanelId] = useState<string | null>(null);
+    const [openPanelId, setOpenPanelId] = useRestorableState<string | null>(
+        "ContentGroupList_OpenPanelId",
+        null,
+        (s) => (s === null ? "null" : s),
+        (s) => (s === "null" ? null : s)
+    );
     const setOpenId = setOpenPanelId;
-    // const setOpenId = useCallback((id: string) => {
-    //     setOpenPanelId((oldId) => {
-    //         const newId = oldId === id ? null : id;
-    //         if (newId) {
-    //             window.localStorage.setItem("ContentGroupList-OpenPanelId", newId);
-    //         } else {
-    //             window.localStorage.removeItem("ContentGroupList-OpenPanelId");
-    //         }
-    //         return newId;
-    //     });
-    // }, []);
 
     const sortedTags = useMemo(() => (data?.Tag ? [...data.Tag].sort((x, y) => x.name.localeCompare(y.name)) : []), [
         data?.Tag,
@@ -287,7 +282,7 @@ export default function ContentGroupList(): JSX.Element {
     }
 
     return (
-        <VStack spacing={4}>
+        <VStack px={4} pt="6ex" spacing={4}>
             <Center flexDirection="column">
                 <SimpleGrid
                     aria-describedby="content-groups-accordion-header"

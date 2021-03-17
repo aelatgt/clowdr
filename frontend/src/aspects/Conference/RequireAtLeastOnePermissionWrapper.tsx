@@ -7,7 +7,7 @@ export default function RequireAtLeastOnePermissionWrapper({
     permissions,
     componentIfDenied,
 }: {
-    children: string | JSX.Element | Array<JSX.Element>;
+    children: React.ReactNode | React.ReactNodeArray;
     permissions?: Array<Permission_Enum>;
     componentIfDenied?: JSX.Element;
 }): JSX.Element | null {

@@ -1,28 +1,14 @@
-import { Alert, AlertIcon, AlertTitle, Heading, SkeletonText } from "@chakra-ui/react";
+import { Heading } from "@chakra-ui/react";
 import React from "react";
+import { Twemoji } from "react-emoji-render";
 import { useChatConfiguration } from "../Configuration";
-import { useChatTitleQuery } from "./TitleQuery";
 
 export function HeadingText(): JSX.Element {
     const config = useChatConfiguration();
-    const titleQ = useChatTitleQuery();
-
-    if (titleQ.loading) {
-        return <SkeletonText />;
-    }
-
-    if (titleQ.error) {
-        return (
-            <Alert>
-                <AlertIcon />
-                <AlertTitle>Failed to load chat title.</AlertTitle>
-            </Alert>
-        );
-    }
 
     return (
-        <Heading as="h1" fontSize="1.2em" fontWeight="600" p={config.spacing}>
-            {titleQ.data}
+        <Heading as="h1" fontSize="sm" textAlign="left" fontWeight="600" p={1} flex="1">
+            <Twemoji className="twemoji" text={config.state.Name} />
         </Heading>
     );
 }

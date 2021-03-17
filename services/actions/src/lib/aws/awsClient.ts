@@ -1,4 +1,3 @@
-import { CloudFormation } from "@aws-sdk/client-cloudformation";
 import { CloudFront } from "@aws-sdk/client-cloudfront";
 import { ElasticTranscoder } from "@aws-sdk/client-elastic-transcoder";
 import { IAM } from "@aws-sdk/client-iam";
@@ -54,12 +53,6 @@ assert(
 const credentials = fromEnv();
 const region = process.env.AWS_REGION;
 
-const cf = new CloudFormation({
-    apiVersion: "2010-05-15",
-    credentials,
-    region,
-});
-
 const iam = new IAM({
     apiVersion: "2010-05-08",
     credentials,
@@ -114,25 +107,30 @@ let mediaconvert: MediaConvert | null = null;
 const shortId = customAlphabet("abcdefghijklmnopqrstuvwxyz1234567890", 5);
 
 async function getMediaConvertClient(): Promise<MediaConvert> {
-    const mediaConvertEndpoint = await new MediaConvert({
-        apiVersion: "2017-08-29",
-        credentials,
-        region,
-    }).describeEndpoints({});
+    let mediaConvertEndpoint = process.env.AWS_MEDIACONVERT_API_ENDPOINT;
 
-    if (
-        !mediaConvertEndpoint.Endpoints ||
-        mediaConvertEndpoint.Endpoints.length < 1 ||
-        !mediaConvertEndpoint.Endpoints[0].Url
-    ) {
-        throw new Error("Could not retrieve customer-specific endpoint for MediaConvert");
+    if (!mediaConvertEndpoint) {
+        const mediaConvertEndpointDescription = await new MediaConvert({
+            apiVersion: "2017-08-29",
+            credentials,
+            region,
+        }).describeEndpoints({});
+
+        if (
+            !mediaConvertEndpointDescription.Endpoints ||
+            mediaConvertEndpointDescription.Endpoints.length < 1 ||
+            !mediaConvertEndpointDescription.Endpoints[0].Url
+        ) {
+            throw new Error("Could not retrieve customer-specific endpoint for MediaConvert");
+        }
+        mediaConvertEndpoint = mediaConvertEndpointDescription.Endpoints[0].Url;
     }
 
     return new MediaConvert({
         apiVersion: "2017-08-29",
         credentials,
         region,
-        endpoint: mediaConvertEndpoint.Endpoints[0].Url,
+        endpoint: mediaConvertEndpoint,
     });
 }
 
@@ -221,7 +219,6 @@ async function initialiseAwsClient(): Promise<void> {
 }
 
 export {
-    cf as CloudFormation,
     iam as IAM,
     s3 as S3,
     mediaconvert as MediaConvert,
