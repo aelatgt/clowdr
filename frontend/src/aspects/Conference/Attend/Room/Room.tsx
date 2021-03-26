@@ -87,7 +87,12 @@ gql`
         }
         eventPeople {
             id
-            attendeeId
+            person {
+                id
+                name
+                affiliation
+                attendeeId
+            }
             roleName
         }
     }
@@ -230,13 +235,13 @@ export function Room({ roomDetails }: { roomDetails: RoomPage_RoomDetailsFragmen
     const presentingCurrentOrNextOrNextNextEvent = useMemo(() => {
         const isPresenterOfCurrentEvent =
             currentRoomEvent !== null &&
-            currentRoomEvent.eventPeople.some((person) => person.attendeeId === currentAttendee.id);
+            currentRoomEvent.eventPeople.some((person) => person.person.attendeeId === currentAttendee.id);
         const isPresenterOfNextEvent =
             nextRoomEvent !== null &&
-            nextRoomEvent.eventPeople.some((person) => person.attendeeId === currentAttendee.id);
+            nextRoomEvent.eventPeople.some((person) => person.person.attendeeId === currentAttendee.id);
         const isPresenterOfNextNextEvent =
             nextNextRoomEvent !== null &&
-            nextNextRoomEvent?.eventPeople.some((person) => person.attendeeId === currentAttendee.id);
+            nextNextRoomEvent?.eventPeople.some((person) => person.person.attendeeId === currentAttendee.id);
         return isPresenterOfCurrentEvent || isPresenterOfNextEvent || isPresenterOfNextNextEvent;
     }, [currentAttendee.id, currentRoomEvent, nextRoomEvent, nextNextRoomEvent]);
 
@@ -275,7 +280,7 @@ export function Room({ roomDetails }: { roomDetails: RoomPage_RoomDetailsFragmen
     useEffect(() => {
         if (
             currentRoomEvent &&
-            currentRoomEvent.eventPeople.some((person) => person.attendeeId === currentAttendee.id) &&
+            currentRoomEvent.eventPeople.some((person) => person.person.attendeeId === currentAttendee.id) &&
             watchStreamForEventId === currentRoomEvent.id &&
             !showBackstage
         ) {
@@ -293,7 +298,7 @@ export function Room({ roomDetails }: { roomDetails: RoomPage_RoomDetailsFragmen
             });
         } else if (
             nextRoomEvent &&
-            nextRoomEvent.eventPeople.some((person) => person.attendeeId === currentAttendee.id) &&
+            nextRoomEvent.eventPeople.some((person) => person.person.attendeeId === currentAttendee.id) &&
             !showBackstage
         ) {
             toast({
@@ -321,7 +326,9 @@ export function Room({ roomDetails }: { roomDetails: RoomPage_RoomDetailsFragmen
 
     const roomEventsForCurrentAttendee = useMemo(
         () =>
-            roomEvents.filter((event) => event.eventPeople.some((person) => person.attendeeId === currentAttendee.id)),
+            roomEvents.filter((event) =>
+                event.eventPeople.some((person) => person.person.attendeeId === currentAttendee.id)
+            ),
         [currentAttendee.id, roomEvents]
     );
     const [backstageSelectedEventId, setBackstageSelectedEventId] = useState<string | null>(null);
@@ -380,10 +387,11 @@ export function Room({ roomDetails }: { roomDetails: RoomPage_RoomDetailsFragmen
     const breakoutVonageRoomEl = useMemo(() => <BreakoutVonageRoom room={roomDetails} />, [roomDetails]);
 
     const currentEventRole = currentRoomEvent?.eventPeople.find(
-        (p) => p.attendeeId && p.attendeeId === currentAttendee.id
+        (p) => p.person.attendeeId && p.person.attendeeId === currentAttendee.id
     )?.roleName;
-    const nextEventRole = nextRoomEvent?.eventPeople.find((p) => p.attendeeId && p.attendeeId === currentAttendee.id)
-        ?.roleName;
+    const nextEventRole = nextRoomEvent?.eventPeople.find(
+        (p) => p.person.attendeeId && p.person.attendeeId === currentAttendee.id
+    )?.roleName;
 
     const contentEl = useMemo(
         () => (
