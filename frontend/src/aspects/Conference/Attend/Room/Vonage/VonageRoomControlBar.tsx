@@ -8,10 +8,12 @@ import { StateType } from "./VonageGlobalState";
 import { useVonageGlobalState } from "./VonageGlobalStateProvider";
 
 export function VonageRoomControlBar({
+    enterVR,
     onJoinRoom,
     onLeaveRoom,
     joining,
 }: {
+    enterVR: () => void;
     onJoinRoom: () => void;
     onLeaveRoom: () => void;
     joining: boolean;
@@ -216,6 +218,9 @@ export function VonageRoomControlBar({
                                     Join Room
                                 </Button>
                             )}
+                            <Button colorScheme="red" w="10em" h="6ex" fontSize="xl" onClick={enterVR}>
+                                Enter VR
+                            </Button>
                         </Box>
                     </WrapItem>
                     <WrapItem>
