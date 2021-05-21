@@ -1,11 +1,29 @@
-import type { ArcRotateCamera, Scene } from "@babylonjs/core";
+import type { Scene } from "@babylonjs/core";
 import * as BABYLON from "@babylonjs/core";
+import {
+    AbstractMesh,
+    Color3,
+    Color4,
+    DirectionalLight,
+    HemisphericLight,
+    MeshBuilder,
+    ParticleSystem,
+    ShadowGenerator,
+    SpotLight,
+    StandardMaterial,
+    Texture,
+    UniversalCamera,
+    Vector3,
+} from "@babylonjs/core";
 import React from "react";
 
-class BabylonScene extends React.Component {
+export type BabylonSceneProps = {
+    show: boolean;
+};
+
+export class BabylonScene extends React.Component<BabylonSceneProps> {
     private engine: BABYLON.Engine | any;
     private canvas: any;
-    private camera: ArcRotateCamera | any;
     private scene: Scene | any;
 
     componentDidMount() {
@@ -15,14 +33,77 @@ class BabylonScene extends React.Component {
         //Create Scene
         this.scene = new BABYLON.Scene(this.engine);
 
-        //--Light---
-        this.addLight();
+        const initCameraPos = new Vector3(0, 0, 5);
+        const camera = new UniversalCamera("Camera", initCameraPos, this.scene);
+        camera.setTarget(Vector3.Zero());
+        camera.attachControl(this.canvas, true);
 
-        //--Camera---
-        this.addCamera();
+        // Add lights to the scene
+        const light1 = new HemisphericLight("light1", new Vector3(1, 1, 0), this.scene);
+        light1.intensity = 0.8;
+
+        const directionalLight = new DirectionalLight("light2", new Vector3(0, 2, -1), this.scene);
+        directionalLight.diffuse = Color3.Red();
+        directionalLight.intensity = 0.2;
+
+        const spotLight = new SpotLight(
+            "spotLight",
+            new Vector3(-10, 10, 10),
+            new Vector3(0, -10, -10),
+            Math.PI / 2,
+            12,
+            this.scene
+        );
+        spotLight.intensity = 10;
+        spotLight.diffuse = Color3.Green();
+
+        const groundPlane = MeshBuilder.CreateGround("groundPlane", { width: 50, height: 50 }, this.scene);
+        groundPlane.position = new Vector3(initCameraPos.x, initCameraPos.y - 1, initCameraPos.z);
+        const groundPlaneTexture = new StandardMaterial("groundPlaneMaterial", this.scene);
+        groundPlaneTexture.ambientTexture = new Texture("img/brick/BrickWallWithLightGrout_basecolor.png", this.scene);
+        groundPlaneTexture.specularColor = new Color3(0, 0, 0);
+        groundPlane.material = groundPlaneTexture;
+
+        // Add and manipulate meshes in the scene
+        const sphere = MeshBuilder.CreateSphere("sphere", { diameter: 2 }, this.scene);
+
+        const box = MeshBuilder.CreateBox("box", { size: 5 }, this.scene);
+        box.position = new Vector3(10, 1.5, 4);
+
+        const cylinder = MeshBuilder.CreateCylinder(
+            "cylinder",
+            { height: 5, diameterTop: 5, diameterBottom: 10 },
+            this.scene
+        );
+        cylinder.position = new Vector3(-10, 1.5, 4);
+        const cylinder2 = MeshBuilder.CreateCylinder("cylinder", { height: 2 }, this.scene);
+        cylinder2.position = new Vector3(2, 0, 4);
+
+        const ico = MeshBuilder.CreateIcoSphere("ico", { radius: 2 }, this.scene);
+        ico.position = new Vector3(3, 1, -4);
+
+        //Shadows for meshs and lights
+        const directionalLightShadow = new ShadowGenerator(1024, directionalLight);
+        directionalLightShadow.getShadowMap()?.renderList?.push(sphere, box, cylinder, cylinder2, ico);
+        directionalLightShadow.useExponentialShadowMap = true;
+
+        const spotLightShadow = new ShadowGenerator(1024, spotLight);
+        spotLightShadow.getShadowMap()?.renderList?.push(sphere, box, cylinder, cylinder2, ico);
+        spotLightShadow.useExponentialShadowMap = true;
+
+        groundPlane.receiveShadows = true;
 
         // Add Events
         window.addEventListener("resize", this.onWindowResize, false);
+
+        window.addEventListener("click", () => {
+            console.log("Click!");
+            const pickResult = this.scene.pick(this.scene.pointerX, this.scene.pointerY);
+            const mesh = pickResult?.pickedMesh;
+            if (mesh && mesh.id != "groundPlane") {
+                this.shootParticles(mesh);
+            }
+        });
 
         // Render Loop
         this.engine.runRenderLoop(() => {
@@ -38,150 +119,51 @@ class BabylonScene extends React.Component {
         this.engine?.resize();
     };
 
-    /**
-     * Add Lights
-     */
-    addLight = () => {
-        //---------- LIGHT---------------------
-        //Create a basic light, aiming 0,1,0 - meaning, to the sky.
-        new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 10, 0), this.scene);
+    shootParticles(mesh: AbstractMesh) {
+        const particleSystem = new ParticleSystem("particles", 2000, this.scene);
+        const flareTexture = new Texture("img/flare.png", this.scene);
+        flareTexture.hasAlpha = true;
+        particleSystem.particleTexture = flareTexture;
+        particleSystem.emitter = mesh;
 
-        const light = new BABYLON.PointLight("light1", new BABYLON.Vector3(0, 10, 0), this.scene);
-        light.intensity = 0.7;
-        // let lightImpostor = BABYLON.Mesh.CreateSphere("sphere1", 16, 1, scene);
-        // let lightImpostorMat = new BABYLON.StandardMaterial("mat", scene);
-        // lightImpostor.material = lightImpostorMat;
-        // lightImpostorMat.emissiveColor = BABYLON.Color3.Yellow();
-        // lightImpostorMat.linkEmissiveWithDiffuse = true;
-        // lightImpostor.parent = light;
-        // // Shadow
-        // const shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
-        // shadowGenerator.setDarkness(0.5);
-        // shadowGenerator.usePoissonSampling = true;
-        //
-        // let lensFlareSystem = new BABYLON.LensFlareSystem(
-        //     "lensFlareSystem",
-        //     light,
-        //     scene
-        // );
-        //
-        // new BABYLON.LensFlare(
-        //     0.2,
-        //     0,
-        //     new BABYLON.Color3(1, 1, 1),
-        //     "shader/lensflare0.png",
-        //     lensFlareSystem
-        // );
-        // new BABYLON.LensFlare(
-        //     0.5,
-        //     0.2,
-        //     new BABYLON.Color3(0.5, 0.5, 1),
-        //     "shader/lensflare3.png",
-        //     lensFlareSystem
-        // );
-        // new BABYLON.LensFlare(
-        //     0.2,
-        //     1.0,
-        //     new BABYLON.Color3(1, 1, 1),
-        //     "shader/lensflare3.png",
-        //     lensFlareSystem
-        // );
-        // new BABYLON.LensFlare(
-        //     0.4,
-        //     0.4,
-        //     new BABYLON.Color3(1, 0.5, 1),
-        //     "shader/lensflare2.png",
-        //     lensFlareSystem
-        // );
-        // new BABYLON.LensFlare(
-        //     0.1,
-        //     0.6,
-        //     new BABYLON.Color3(1, 1, 1),
-        //     "shader/lensflare0.png",
-        //     lensFlareSystem
-        // );
-        // new BABYLON.LensFlare(
-        //     0.3,
-        //     0.8,
-        //     new BABYLON.Color3(1, 1, 1),
-        //     "shader/lensflare0.png",
-        //     lensFlareSystem
-        // );
-    };
+        // Size of each particle (random between...
+        particleSystem.minSize = 0.1;
+        particleSystem.maxSize = 0.5;
 
-    /**
-     * Add Camera
-     */
-    addCamera = (): void => {
-        // ---------------ArcRotateCamera or Orbit Control----------
-        this.camera = new BABYLON.ArcRotateCamera(
-            "Camera",
-            Math.PI / 2,
-            Math.PI / 4,
-            4,
-            BABYLON.Vector3.Zero(),
-            this.scene
-        );
-        this.camera.inertia = 0;
-        this.camera.angularSensibilityX = 250;
-        this.camera.angularSensibilityY = 250;
+        // Life time of each particle (random between...
+        particleSystem.minLifeTime = 0.3;
+        particleSystem.maxLifeTime = 1.5;
 
-        // This attaches the camera to the canvas
-        this.camera.attachControl(this.canvas, true);
-        this.camera.setPosition(new BABYLON.Vector3(5, 5, 5));
+        // Emission rate
+        particleSystem.emitRate = 1500;
 
-        // ---------------Follow Camera----------
-        // This creates and initially positions a follow camera
-        // this.camera = new BABYLON.FollowCamera("Camera", new BABYLON.Vector3(0, 3, -5), scene);
-        //
-        // this.camera.radius = 10;
-        // this.camera.heightOffset = 5;
-        // this.camera.rotationOffset = 0;
-        // this.camera.cameraAcceleration = 0.01
-        // this.camera.maxCameraSpeed = 10
-        //
-        // // This attaches the camera to the canvas
-        // this.camera.attachControl(this.canvas, true);
-    };
+        // Direction of each particle after it has been emitted
+        particleSystem.direction1 = new Vector3(-7, 8, 3);
+        particleSystem.direction2 = new Vector3(7, 8, -3);
 
-    /**
-     *  Create a built-in "ground" shape.
-     */
-    addGround = () => {
-        //Create ground from Box
-        // const groundMesh = BABYLON.MeshBuilder.CreateBox(
-        //     "ground",
-        //     { height: 0.3, width: GROUND_SIZE, depth: GROUND_SIZE, subdivisions: 16 },
-        //     scene
-        // );
-        //
-        // //Ground Material
-        // const groundMaterial = new BABYLON.StandardMaterial("grass0", scene);
-        // groundMaterial.diffuseTexture = new BABYLON.Texture(
-        //     "./assets/ground.jpeg",
-        //     scene
-        // );
-        // groundMesh.material = groundMaterial;
-        //Add Bumps
-        // this.applyBumpTexture(groundMesh, "./textures/concrete/");
-        //Add Grass
-        //this.addGrass(groundMesh);
-        //Shadow
-        // groundMesh.receiveShadows = true;
-        //
-        // //Ground Physics
-        // groundMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        //     groundMesh,
-        //     BABYLON.PhysicsImpostor.BoxImpostor,
-        //     { mass: 0, friction: 1.5, restitution: 0.7 },
-        //     scene
-        // );
-    };
+        // Colors of all particles
+        particleSystem.color1 = new Color4(0.7, 0.8, 1.0, 1.0);
+        particleSystem.color2 = new Color4(0.2, 0.5, 1.0, 1.0);
+        particleSystem.colorDead = new Color4(0, 0, 0.2, 0.0);
+
+        // Speed
+        particleSystem.minEmitPower = 1;
+        particleSystem.maxEmitPower = 3;
+        particleSystem.updateSpeed = 0.005;
+
+        particleSystem.targetStopDuration = 0.25;
+        particleSystem.disposeOnStop = true;
+
+        particleSystem.start();
+    }
 
     render() {
+        const vis = this.props.show ? "visible" : "hidden";
+        this.engine?.resize();
+
         return (
             <canvas
-                style={{ width: window.innerWidth, height: window.innerHeight }}
+                style={{ width: 1000, height: 500, visibility: vis }}
                 ref={(canvas) => {
                     this.canvas = canvas;
                 }}
@@ -189,5 +171,3 @@ class BabylonScene extends React.Component {
         );
     }
 }
-
-export default BabylonScene;
