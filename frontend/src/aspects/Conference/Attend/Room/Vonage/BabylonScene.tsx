@@ -107,8 +107,11 @@ export class BabylonScene extends React.Component<BabylonSceneProps> {
 
         // Render Loop
         this.engine.runRenderLoop(() => {
+            this.engine?.resize();
             this.scene.render();
         });
+
+        this.engine.runRend;
     }
 
     componentWillUnmount() {
@@ -161,7 +164,6 @@ export class BabylonScene extends React.Component<BabylonSceneProps> {
         const vis = this.props.show ? "visible" : "hidden";
         const w = this.props.show ? 1000 : 0;
         const h = this.props.show ? 500 : 0;
-        this.engine?.resize();
 
         return (
             <canvas
