@@ -159,11 +159,13 @@ export class BabylonScene extends React.Component<BabylonSceneProps> {
 
     render() {
         const vis = this.props.show ? "visible" : "hidden";
+        const w = this.props.show ? 1000 : 0;
+        const h = this.props.show ? 500 : 0;
         this.engine?.resize();
 
         return (
             <canvas
-                style={{ width: 1000, height: 500, visibility: vis }}
+                style={{ width: w, height: h, visibility: vis }}
                 ref={(canvas) => {
                     this.canvas = canvas;
                 }}
