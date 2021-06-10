@@ -9,6 +9,7 @@ import { useVonageRoom, VonageRoomStateActionType, VonageRoomStateProvider } fro
 import useCurrentAttendee, { useMaybeCurrentAttendee } from "../../../useCurrentAttendee";
 import PlaceholderImage from "../PlaceholderImage";
 import { PreJoin } from "../PreJoin";
+import { BabylonScene } from "./BabylonScene";
 import { useVonageComputedState } from "./useVonageComputedState";
 import { VonageOverlay } from "./VonageOverlay";
 import { VonageRoomControlBar } from "./VonageRoomControlBar";
@@ -78,6 +79,8 @@ function VonageRoomInner({
     const cameraPreviewRef = useRef<HTMLVideoElement>(null);
 
     const [joining, setJoining] = useState<boolean>(false);
+
+    const [showVR, setShowVR] = useState<boolean>(false);
 
     const resolutionBP = useBreakpointValue<"low" | "normal" | "high">({
         base: "low",
@@ -524,11 +527,24 @@ function VonageRoomInner({
         [otherUnpublishedConnections, participantWidth]
     );
 
+    const vrClicked = () => {
+        console.log("VR Clicked");
+        setShowVR(!showVR);
+    };
+
     return (
         <Box>
             {/* Use memo'ing the control bar causes the screenshare button to not update properly 🤔 */}
-            <VonageRoomControlBar onJoinRoom={joinRoom} onLeaveRoom={leaveRoom} joining={joining} />
+            <VonageRoomControlBar
+                isInVR={showVR}
+                enterVR={vrClicked}
+                onJoinRoom={joinRoom}
+                onLeaveRoom={leaveRoom}
+                joining={joining}
+            />
+
             <Box position="relative" mb={8} width="100%">
+                <BabylonScene show={showVR} />
                 {viewPublishedScreenShareEl}
 
                 {viewSubscribedScreenShare}

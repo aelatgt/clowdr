@@ -93,6 +93,7 @@
         "react-player": "^2.9.0",
         "react-reverse-portal": "^2.0.1",
         "react-router-dom": "^5.2.0",
+        "react-scripts": "3.0.1",
         "react-select": "^4.1.0",
         "react-table": "^7.6.3",
         "react-use-opentok": "^2.3.0",

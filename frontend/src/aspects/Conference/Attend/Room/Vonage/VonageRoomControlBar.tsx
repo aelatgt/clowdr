@@ -8,10 +8,14 @@ import { StateType } from "./VonageGlobalState";
 import { useVonageGlobalState } from "./VonageGlobalStateProvider";
 
 export function VonageRoomControlBar({
+    isInVR,
+    enterVR,
     onJoinRoom,
     onLeaveRoom,
     joining,
 }: {
+    isInVR: boolean;
+    enterVR: () => void;
     onJoinRoom: () => void;
     onLeaveRoom: () => void;
     joining: boolean;
@@ -194,12 +198,9 @@ export function VonageRoomControlBar({
         [vonage.state]
     );
 
-    /*
-    BCP: Might be useful to play with the color and size of the join room buttom -- e.g., 
-                                    colorScheme="red"
-                                    w="12em"
-                                    h="8ex"
-    */
+    const vrText = isInVR ? "Exit VR" : "Enter VR";
+    const vrColor = isInVR ? "red" : "purple";
+
     return (
         <>
             <VStack my={4}>
@@ -222,6 +223,9 @@ export function VonageRoomControlBar({
                                     Join Room
                                 </Button>
                             )}
+                            <Button colorScheme={vrColor} w="10em" h="6ex" fontSize="xl" onClick={enterVR}>
+                                {vrText}
+                            </Button>
                         </Box>
                     </WrapItem>
                     <WrapItem>
