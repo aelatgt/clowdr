@@ -31,10 +31,6 @@ export type Attendee = {
   readonly createdAt: Scalars['timestamptz'];
   readonly displayName: Scalars['String'];
   /** An array relationship */
-  readonly eventPeople: ReadonlyArray<EventPerson>;
-  /** An aggregated array relationship */
-  readonly eventPeople_aggregate: EventPerson_Aggregate;
-  /** An array relationship */
   readonly groupAttendees: ReadonlyArray<GroupAttendee>;
   /** An aggregated array relationship */
   readonly groupAttendees_aggregate: GroupAttendee_Aggregate;
@@ -73,26 +69,6 @@ export type AttendeeContentPeople_AggregateArgs = {
   offset?: Maybe<Scalars['Int']>;
   order_by?: Maybe<ReadonlyArray<ContentPerson_Order_By>>;
   where?: Maybe<ContentPerson_Bool_Exp>;
-};
-
-
-/** columns and relationships of "Attendee" */
-export type AttendeeEventPeopleArgs = {
-  distinct_on?: Maybe<ReadonlyArray<EventPerson_Select_Column>>;
-  limit?: Maybe<Scalars['Int']>;
-  offset?: Maybe<Scalars['Int']>;
-  order_by?: Maybe<ReadonlyArray<EventPerson_Order_By>>;
-  where?: Maybe<EventPerson_Bool_Exp>;
-};
-
-
-/** columns and relationships of "Attendee" */
-export type AttendeeEventPeople_AggregateArgs = {
-  distinct_on?: Maybe<ReadonlyArray<EventPerson_Select_Column>>;
-  limit?: Maybe<Scalars['Int']>;
-  offset?: Maybe<Scalars['Int']>;
-  order_by?: Maybe<ReadonlyArray<EventPerson_Order_By>>;
-  where?: Maybe<EventPerson_Bool_Exp>;
 };
 
 
@@ -972,7 +948,6 @@ export type Attendee_Bool_Exp = {
   readonly contentPeople?: Maybe<ContentPerson_Bool_Exp>;
   readonly createdAt?: Maybe<Timestamptz_Comparison_Exp>;
   readonly displayName?: Maybe<String_Comparison_Exp>;
-  readonly eventPeople?: Maybe<EventPerson_Bool_Exp>;
   readonly groupAttendees?: Maybe<GroupAttendee_Bool_Exp>;
   readonly id?: Maybe<Uuid_Comparison_Exp>;
   readonly invitation?: Maybe<Invitation_Bool_Exp>;
@@ -998,7 +973,6 @@ export type Attendee_Insert_Input = {
   readonly contentPeople?: Maybe<ContentPerson_Arr_Rel_Insert_Input>;
   readonly createdAt?: Maybe<Scalars['timestamptz']>;
   readonly displayName?: Maybe<Scalars['String']>;
-  readonly eventPeople?: Maybe<EventPerson_Arr_Rel_Insert_Input>;
   readonly groupAttendees?: Maybe<GroupAttendee_Arr_Rel_Insert_Input>;
   readonly id?: Maybe<Scalars['uuid']>;
   readonly invitation?: Maybe<Invitation_Obj_Rel_Insert_Input>;
@@ -1080,7 +1054,6 @@ export type Attendee_Order_By = {
   readonly contentPeople_aggregate?: Maybe<ContentPerson_Aggregate_Order_By>;
   readonly createdAt?: Maybe<Order_By>;
   readonly displayName?: Maybe<Order_By>;
-  readonly eventPeople_aggregate?: Maybe<EventPerson_Aggregate_Order_By>;
   readonly groupAttendees_aggregate?: Maybe<GroupAttendee_Aggregate_Order_By>;
   readonly id?: Maybe<Order_By>;
   readonly invitation?: Maybe<Invitation_Order_By>;
@@ -4842,6 +4815,10 @@ export type ContentPerson = {
   /** An aggregated array relationship */
   readonly contentItemPeople_aggregate: ContentGroupPerson_Aggregate;
   readonly email?: Maybe<Scalars['String']>;
+  /** An array relationship */
+  readonly eventPeople: ReadonlyArray<EventPerson>;
+  /** An aggregated array relationship */
+  readonly eventPeople_aggregate: EventPerson_Aggregate;
   readonly id: Scalars['uuid'];
   readonly name: Scalars['String'];
   /** An object relationship */
@@ -4867,6 +4844,26 @@ export type ContentPersonContentItemPeople_AggregateArgs = {
   offset?: Maybe<Scalars['Int']>;
   order_by?: Maybe<ReadonlyArray<ContentGroupPerson_Order_By>>;
   where?: Maybe<ContentGroupPerson_Bool_Exp>;
+};
+
+
+/** columns and relationships of "ContentPerson" */
+export type ContentPersonEventPeopleArgs = {
+  distinct_on?: Maybe<ReadonlyArray<EventPerson_Select_Column>>;
+  limit?: Maybe<Scalars['Int']>;
+  offset?: Maybe<Scalars['Int']>;
+  order_by?: Maybe<ReadonlyArray<EventPerson_Order_By>>;
+  where?: Maybe<EventPerson_Bool_Exp>;
+};
+
+
+/** columns and relationships of "ContentPerson" */
+export type ContentPersonEventPeople_AggregateArgs = {
+  distinct_on?: Maybe<ReadonlyArray<EventPerson_Select_Column>>;
+  limit?: Maybe<Scalars['Int']>;
+  offset?: Maybe<Scalars['Int']>;
+  order_by?: Maybe<ReadonlyArray<EventPerson_Order_By>>;
+  where?: Maybe<EventPerson_Bool_Exp>;
 };
 
 /** aggregated selection of "ContentPerson" */
@@ -4916,6 +4913,7 @@ export type ContentPerson_Bool_Exp = {
   readonly conferenceId?: Maybe<Uuid_Comparison_Exp>;
   readonly contentItemPeople?: Maybe<ContentGroupPerson_Bool_Exp>;
   readonly email?: Maybe<String_Comparison_Exp>;
+  readonly eventPeople?: Maybe<EventPerson_Bool_Exp>;
   readonly id?: Maybe<Uuid_Comparison_Exp>;
   readonly name?: Maybe<String_Comparison_Exp>;
   readonly originatingData?: Maybe<OriginatingData_Bool_Exp>;
@@ -4939,6 +4937,7 @@ export type ContentPerson_Insert_Input = {
   readonly conferenceId?: Maybe<Scalars['uuid']>;
   readonly contentItemPeople?: Maybe<ContentGroupPerson_Arr_Rel_Insert_Input>;
   readonly email?: Maybe<Scalars['String']>;
+  readonly eventPeople?: Maybe<EventPerson_Arr_Rel_Insert_Input>;
   readonly id?: Maybe<Scalars['uuid']>;
   readonly name?: Maybe<Scalars['String']>;
   readonly originatingData?: Maybe<OriginatingData_Obj_Rel_Insert_Input>;
@@ -5022,6 +5021,7 @@ export type ContentPerson_Order_By = {
   readonly conferenceId?: Maybe<Order_By>;
   readonly contentItemPeople_aggregate?: Maybe<ContentGroupPerson_Aggregate_Order_By>;
   readonly email?: Maybe<Order_By>;
+  readonly eventPeople_aggregate?: Maybe<EventPerson_Aggregate_Order_By>;
   readonly id?: Maybe<Order_By>;
   readonly name?: Maybe<Order_By>;
   readonly originatingData?: Maybe<OriginatingData_Order_By>;
@@ -6164,13 +6164,6 @@ export enum EventParticipantStream_Update_Column {
 /** columns and relationships of "EventPerson" */
 export type EventPerson = {
   readonly __typename?: 'EventPerson';
-  readonly affiliation?: Maybe<Scalars['String']>;
-  /** An object relationship */
-  readonly attendee?: Maybe<Attendee>;
-  readonly attendeeId?: Maybe<Scalars['uuid']>;
-  /** An object relationship */
-  readonly conference: Conference;
-  readonly conferenceId: Scalars['uuid'];
   readonly createdAt: Scalars['timestamptz'];
   /** An object relationship */
   readonly event: Event;
@@ -6178,10 +6171,9 @@ export type EventPerson = {
   /** An object relationship */
   readonly eventPersonRole: EventPersonRole;
   readonly id: Scalars['uuid'];
-  readonly name: Scalars['String'];
   /** An object relationship */
-  readonly originatingData?: Maybe<OriginatingData>;
-  readonly originatingDataId?: Maybe<Scalars['uuid']>;
+  readonly person: ContentPerson;
+  readonly personId: Scalars['uuid'];
   readonly roleName: EventPersonRole_Enum;
   readonly updatedAt: Scalars['timestamptz'];
 };
@@ -6415,19 +6407,13 @@ export type EventPerson_Bool_Exp = {
   readonly _and?: Maybe<ReadonlyArray<Maybe<EventPerson_Bool_Exp>>>;
   readonly _not?: Maybe<EventPerson_Bool_Exp>;
   readonly _or?: Maybe<ReadonlyArray<Maybe<EventPerson_Bool_Exp>>>;
-  readonly affiliation?: Maybe<String_Comparison_Exp>;
-  readonly attendee?: Maybe<Attendee_Bool_Exp>;
-  readonly attendeeId?: Maybe<Uuid_Comparison_Exp>;
-  readonly conference?: Maybe<Conference_Bool_Exp>;
-  readonly conferenceId?: Maybe<Uuid_Comparison_Exp>;
   readonly createdAt?: Maybe<Timestamptz_Comparison_Exp>;
   readonly event?: Maybe<Event_Bool_Exp>;
   readonly eventId?: Maybe<Uuid_Comparison_Exp>;
   readonly eventPersonRole?: Maybe<EventPersonRole_Bool_Exp>;
   readonly id?: Maybe<Uuid_Comparison_Exp>;
-  readonly name?: Maybe<String_Comparison_Exp>;
-  readonly originatingData?: Maybe<OriginatingData_Bool_Exp>;
-  readonly originatingDataId?: Maybe<Uuid_Comparison_Exp>;
+  readonly person?: Maybe<ContentPerson_Bool_Exp>;
+  readonly personId?: Maybe<Uuid_Comparison_Exp>;
   readonly roleName?: Maybe<EventPersonRole_Enum_Comparison_Exp>;
   readonly updatedAt?: Maybe<Timestamptz_Comparison_Exp>;
 };
@@ -6435,28 +6421,20 @@ export type EventPerson_Bool_Exp = {
 /** unique or primary key constraints on table "EventPerson" */
 export enum EventPerson_Constraint {
   /** unique or primary key constraint */
-  EventPersonEventIdAttendeeIdRoleNameKey = 'EventPerson_eventId_attendeeId_roleName_key',
-  /** unique or primary key constraint */
-  EventPersonEventIdNameAffiliationKey = 'EventPerson_eventId_name_affiliation_key',
+  EventPersonEventIdPersonIdRoleNameKey = 'EventPerson_eventId_personId_roleName_key',
   /** unique or primary key constraint */
   EventPersonPkey = 'EventPerson_pkey'
 }
 
 /** input type for inserting data into table "EventPerson" */
 export type EventPerson_Insert_Input = {
-  readonly affiliation?: Maybe<Scalars['String']>;
-  readonly attendee?: Maybe<Attendee_Obj_Rel_Insert_Input>;
-  readonly attendeeId?: Maybe<Scalars['uuid']>;
-  readonly conference?: Maybe<Conference_Obj_Rel_Insert_Input>;
-  readonly conferenceId?: Maybe<Scalars['uuid']>;
   readonly createdAt?: Maybe<Scalars['timestamptz']>;
   readonly event?: Maybe<Event_Obj_Rel_Insert_Input>;
   readonly eventId?: Maybe<Scalars['uuid']>;
   readonly eventPersonRole?: Maybe<EventPersonRole_Obj_Rel_Insert_Input>;
   readonly id?: Maybe<Scalars['uuid']>;
-  readonly name?: Maybe<Scalars['String']>;
-  readonly originatingData?: Maybe<OriginatingData_Obj_Rel_Insert_Input>;
-  readonly originatingDataId?: Maybe<Scalars['uuid']>;
+  readonly person?: Maybe<ContentPerson_Obj_Rel_Insert_Input>;
+  readonly personId?: Maybe<Scalars['uuid']>;
   readonly roleName?: Maybe<EventPersonRole_Enum>;
   readonly updatedAt?: Maybe<Scalars['timestamptz']>;
 };
@@ -6464,54 +6442,38 @@ export type EventPerson_Insert_Input = {
 /** aggregate max on columns */
 export type EventPerson_Max_Fields = {
   readonly __typename?: 'EventPerson_max_fields';
-  readonly affiliation?: Maybe<Scalars['String']>;
-  readonly attendeeId?: Maybe<Scalars['uuid']>;
-  readonly conferenceId?: Maybe<Scalars['uuid']>;
   readonly createdAt?: Maybe<Scalars['timestamptz']>;
   readonly eventId?: Maybe<Scalars['uuid']>;
   readonly id?: Maybe<Scalars['uuid']>;
-  readonly name?: Maybe<Scalars['String']>;
-  readonly originatingDataId?: Maybe<Scalars['uuid']>;
+  readonly personId?: Maybe<Scalars['uuid']>;
   readonly updatedAt?: Maybe<Scalars['timestamptz']>;
 };
 
 /** order by max() on columns of table "EventPerson" */
 export type EventPerson_Max_Order_By = {
-  readonly affiliation?: Maybe<Order_By>;
-  readonly attendeeId?: Maybe<Order_By>;
-  readonly conferenceId?: Maybe<Order_By>;
   readonly createdAt?: Maybe<Order_By>;
   readonly eventId?: Maybe<Order_By>;
   readonly id?: Maybe<Order_By>;
-  readonly name?: Maybe<Order_By>;
-  readonly originatingDataId?: Maybe<Order_By>;
+  readonly personId?: Maybe<Order_By>;
   readonly updatedAt?: Maybe<Order_By>;
 };
 
 /** aggregate min on columns */
 export type EventPerson_Min_Fields = {
   readonly __typename?: 'EventPerson_min_fields';
-  readonly affiliation?: Maybe<Scalars['String']>;
-  readonly attendeeId?: Maybe<Scalars['uuid']>;
-  readonly conferenceId?: Maybe<Scalars['uuid']>;
   readonly createdAt?: Maybe<Scalars['timestamptz']>;
   readonly eventId?: Maybe<Scalars['uuid']>;
   readonly id?: Maybe<Scalars['uuid']>;
-  readonly name?: Maybe<Scalars['String']>;
-  readonly originatingDataId?: Maybe<Scalars['uuid']>;
+  readonly personId?: Maybe<Scalars['uuid']>;
   readonly updatedAt?: Maybe<Scalars['timestamptz']>;
 };
 
 /** order by min() on columns of table "EventPerson" */
 export type EventPerson_Min_Order_By = {
-  readonly affiliation?: Maybe<Order_By>;
-  readonly attendeeId?: Maybe<Order_By>;
-  readonly conferenceId?: Maybe<Order_By>;
   readonly createdAt?: Maybe<Order_By>;
   readonly eventId?: Maybe<Order_By>;
   readonly id?: Maybe<Order_By>;
-  readonly name?: Maybe<Order_By>;
-  readonly originatingDataId?: Maybe<Order_By>;
+  readonly personId?: Maybe<Order_By>;
   readonly updatedAt?: Maybe<Order_By>;
 };
 
@@ -6539,19 +6501,13 @@ export type EventPerson_On_Conflict = {
 
 /** ordering options when selecting data from "EventPerson" */
 export type EventPerson_Order_By = {
-  readonly affiliation?: Maybe<Order_By>;
-  readonly attendee?: Maybe<Attendee_Order_By>;
-  readonly attendeeId?: Maybe<Order_By>;
-  readonly conference?: Maybe<Conference_Order_By>;
-  readonly conferenceId?: Maybe<Order_By>;
   readonly createdAt?: Maybe<Order_By>;
   readonly event?: Maybe<Event_Order_By>;
   readonly eventId?: Maybe<Order_By>;
   readonly eventPersonRole?: Maybe<EventPersonRole_Order_By>;
   readonly id?: Maybe<Order_By>;
-  readonly name?: Maybe<Order_By>;
-  readonly originatingData?: Maybe<OriginatingData_Order_By>;
-  readonly originatingDataId?: Maybe<Order_By>;
+  readonly person?: Maybe<ContentPerson_Order_By>;
+  readonly personId?: Maybe<Order_By>;
   readonly roleName?: Maybe<Order_By>;
   readonly updatedAt?: Maybe<Order_By>;
 };
@@ -6564,21 +6520,13 @@ export type EventPerson_Pk_Columns_Input = {
 /** select columns of table "EventPerson" */
 export enum EventPerson_Select_Column {
   /** column name */
-  Affiliation = 'affiliation',
-  /** column name */
-  AttendeeId = 'attendeeId',
-  /** column name */
-  ConferenceId = 'conferenceId',
-  /** column name */
   CreatedAt = 'createdAt',
   /** column name */
   EventId = 'eventId',
   /** column name */
   Id = 'id',
   /** column name */
-  Name = 'name',
-  /** column name */
-  OriginatingDataId = 'originatingDataId',
+  PersonId = 'personId',
   /** column name */
   RoleName = 'roleName',
   /** column name */
@@ -6587,14 +6535,10 @@ export enum EventPerson_Select_Column {
 
 /** input type for updating data in table "EventPerson" */
 export type EventPerson_Set_Input = {
-  readonly affiliation?: Maybe<Scalars['String']>;
-  readonly attendeeId?: Maybe<Scalars['uuid']>;
-  readonly conferenceId?: Maybe<Scalars['uuid']>;
   readonly createdAt?: Maybe<Scalars['timestamptz']>;
   readonly eventId?: Maybe<Scalars['uuid']>;
   readonly id?: Maybe<Scalars['uuid']>;
-  readonly name?: Maybe<Scalars['String']>;
-  readonly originatingDataId?: Maybe<Scalars['uuid']>;
+  readonly personId?: Maybe<Scalars['uuid']>;
   readonly roleName?: Maybe<EventPersonRole_Enum>;
   readonly updatedAt?: Maybe<Scalars['timestamptz']>;
 };
@@ -6602,21 +6546,13 @@ export type EventPerson_Set_Input = {
 /** update columns of table "EventPerson" */
 export enum EventPerson_Update_Column {
   /** column name */
-  Affiliation = 'affiliation',
-  /** column name */
-  AttendeeId = 'attendeeId',
-  /** column name */
-  ConferenceId = 'conferenceId',
-  /** column name */
   CreatedAt = 'createdAt',
   /** column name */
   EventId = 'eventId',
   /** column name */
   Id = 'id',
   /** column name */
-  Name = 'name',
-  /** column name */
-  OriginatingDataId = 'originatingDataId',
+  PersonId = 'personId',
   /** column name */
   RoleName = 'roleName',
   /** column name */
@@ -10381,10 +10317,6 @@ export type OriginatingData = {
   readonly createdAt: Scalars['timestamptz'];
   readonly data?: Maybe<Scalars['jsonb']>;
   /** An array relationship */
-  readonly eventPeople: ReadonlyArray<EventPerson>;
-  /** An aggregated array relationship */
-  readonly eventPeople_aggregate: EventPerson_Aggregate;
-  /** An array relationship */
   readonly events: ReadonlyArray<Event>;
   /** An aggregated array relationship */
   readonly events_aggregate: Event_Aggregate;
@@ -10469,26 +10401,6 @@ export type OriginatingDataContentPeople_AggregateArgs = {
 /** columns and relationships of "OriginatingData" */
 export type OriginatingDataDataArgs = {
   path?: Maybe<Scalars['String']>;
-};
-
-
-/** columns and relationships of "OriginatingData" */
-export type OriginatingDataEventPeopleArgs = {
-  distinct_on?: Maybe<ReadonlyArray<EventPerson_Select_Column>>;
-  limit?: Maybe<Scalars['Int']>;
-  offset?: Maybe<Scalars['Int']>;
-  order_by?: Maybe<ReadonlyArray<EventPerson_Order_By>>;
-  where?: Maybe<EventPerson_Bool_Exp>;
-};
-
-
-/** columns and relationships of "OriginatingData" */
-export type OriginatingDataEventPeople_AggregateArgs = {
-  distinct_on?: Maybe<ReadonlyArray<EventPerson_Select_Column>>;
-  limit?: Maybe<Scalars['Int']>;
-  offset?: Maybe<Scalars['Int']>;
-  order_by?: Maybe<ReadonlyArray<EventPerson_Order_By>>;
-  where?: Maybe<EventPerson_Bool_Exp>;
 };
 
 
@@ -10623,7 +10535,6 @@ export type OriginatingData_Bool_Exp = {
   readonly contentPeople?: Maybe<ContentPerson_Bool_Exp>;
   readonly createdAt?: Maybe<Timestamptz_Comparison_Exp>;
   readonly data?: Maybe<Jsonb_Comparison_Exp>;
-  readonly eventPeople?: Maybe<EventPerson_Bool_Exp>;
   readonly events?: Maybe<Event_Bool_Exp>;
   readonly id?: Maybe<Uuid_Comparison_Exp>;
   readonly requiredContentItems?: Maybe<RequiredContentItem_Bool_Exp>;
@@ -10665,7 +10576,6 @@ export type OriginatingData_Insert_Input = {
   readonly contentPeople?: Maybe<ContentPerson_Arr_Rel_Insert_Input>;
   readonly createdAt?: Maybe<Scalars['timestamptz']>;
   readonly data?: Maybe<Scalars['jsonb']>;
-  readonly eventPeople?: Maybe<EventPerson_Arr_Rel_Insert_Input>;
   readonly events?: Maybe<Event_Arr_Rel_Insert_Input>;
   readonly id?: Maybe<Scalars['uuid']>;
   readonly requiredContentItems?: Maybe<RequiredContentItem_Arr_Rel_Insert_Input>;
@@ -10744,7 +10654,6 @@ export type OriginatingData_Order_By = {
   readonly contentPeople_aggregate?: Maybe<ContentPerson_Aggregate_Order_By>;
   readonly createdAt?: Maybe<Order_By>;
   readonly data?: Maybe<Order_By>;
-  readonly eventPeople_aggregate?: Maybe<EventPerson_Aggregate_Order_By>;
   readonly events_aggregate?: Maybe<Event_Aggregate_Order_By>;
   readonly id?: Maybe<Order_By>;
   readonly requiredContentItems_aggregate?: Maybe<RequiredContentItem_Aggregate_Order_By>;
@@ -32644,8 +32553,6 @@ export type ContentGroupSummary_ContentGroupDataFragment = { readonly __typename
 
 export type ContentItemDataFragment = { readonly __typename?: 'ContentItem', readonly id: any, readonly data: any, readonly layoutData?: Maybe<any>, readonly name: string, readonly contentTypeName: ContentType_Enum };
 
-export type Timeline_EventPersonFragment = { readonly __typename?: 'EventPerson', readonly id: any, readonly attendeeId?: Maybe<any>, readonly name: string, readonly affiliation?: Maybe<string>, readonly roleName: EventPersonRole_Enum };
-
 export type AttendeeByIdQueryVariables = Exact<{
   conferenceId: Scalars['uuid'];
   attendeeId: Scalars['uuid'];
@@ -32824,7 +32731,7 @@ export type Room_GetEventsQuery = { readonly __typename?: 'query_root', readonly
     & Room_EventSummaryFragment
   )> };
 
-export type Room_EventSummaryFragment = { readonly __typename?: 'Event', readonly id: any, readonly conferenceId: any, readonly startTime: any, readonly name: string, readonly endTime?: Maybe<any>, readonly intendedRoomModeName: RoomMode_Enum, readonly contentGroupId?: Maybe<any>, readonly contentGroup?: Maybe<{ readonly __typename?: 'ContentGroup', readonly id: any, readonly title: string }>, readonly eventPeople: ReadonlyArray<{ readonly __typename?: 'EventPerson', readonly id: any, readonly attendeeId?: Maybe<any>, readonly roleName: EventPersonRole_Enum }> };
+export type Room_EventSummaryFragment = { readonly __typename?: 'Event', readonly id: any, readonly conferenceId: any, readonly startTime: any, readonly name: string, readonly endTime?: Maybe<any>, readonly intendedRoomModeName: RoomMode_Enum, readonly contentGroupId?: Maybe<any>, readonly contentGroup?: Maybe<{ readonly __typename?: 'ContentGroup', readonly id: any, readonly title: string }>, readonly eventPeople: ReadonlyArray<{ readonly __typename?: 'EventPerson', readonly id: any, readonly roleName: EventPersonRole_Enum, readonly person: { readonly __typename?: 'ContentPerson', readonly id: any, readonly name: string, readonly affiliation?: Maybe<string>, readonly attendeeId?: Maybe<any> } }> };
 
 export type Room_GetEventBreakoutRoomQueryVariables = Exact<{
   originatingContentGroupId: Scalars['uuid'];
@@ -33065,6 +32972,18 @@ export type ContentGroup_CreateRoomMutationVariables = Exact<{
 
 export type ContentGroup_CreateRoomMutation = { readonly __typename?: 'mutation_root', readonly createContentGroupRoom?: Maybe<{ readonly __typename?: 'CreateContentGroupRoomOutput', readonly roomId?: Maybe<string>, readonly message?: Maybe<string> }> };
 
+export type ManageContentPeople_AttendeeFragment = { readonly __typename?: 'Attendee', readonly id: any, readonly displayName: string, readonly invitation?: Maybe<{ readonly __typename?: 'Invitation', readonly id: any, readonly invitedEmailAddress: string }>, readonly profile?: Maybe<{ readonly __typename?: 'AttendeeProfile', readonly attendeeId: any, readonly affiliation?: Maybe<string> }> };
+
+export type ManageContentPeople_SelectAllAttendeesQueryVariables = Exact<{
+  conferenceId: Scalars['uuid'];
+}>;
+
+
+export type ManageContentPeople_SelectAllAttendeesQuery = { readonly __typename?: 'query_root', readonly Attendee: ReadonlyArray<(
+    { readonly __typename?: 'Attendee' }
+    & ManageContentPeople_AttendeeFragment
+  )> };
+
 export type SubmissionRequestsModal_GetConferenceConfigurationsQueryVariables = Exact<{
   conferenceId: Scalars['uuid'];
 }>;
@@ -33095,7 +33014,7 @@ export type ContentItemInfoFragment = { readonly __typename?: 'ContentItem', rea
 
 export type OriginatingDataInfoFragment = { readonly __typename?: 'OriginatingData', readonly id: any, readonly conferenceId: any, readonly sourceId: string, readonly data?: Maybe<any> };
 
-export type ContentPersonInfoFragment = { readonly __typename?: 'ContentPerson', readonly id: any, readonly conferenceId: any, readonly name: string, readonly affiliation?: Maybe<string>, readonly email?: Maybe<string>, readonly originatingDataId?: Maybe<any> };
+export type ContentPersonInfoFragment = { readonly __typename?: 'ContentPerson', readonly id: any, readonly conferenceId: any, readonly name: string, readonly affiliation?: Maybe<string>, readonly email?: Maybe<string>, readonly originatingDataId?: Maybe<any>, readonly attendeeId?: Maybe<any> };
 
 export type ContentGroupTagInfoFragment = { readonly __typename?: 'ContentGroupTag', readonly id: any, readonly tagId: any, readonly contentGroupId: any };
 
@@ -33343,6 +33262,7 @@ export type UpdatePersonMutationVariables = Exact<{
   affiliation?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['String']>;
   originatingDataId?: Maybe<Scalars['uuid']>;
+  attendeeId?: Maybe<Scalars['uuid']>;
 }>;
 
 
@@ -33796,6 +33716,94 @@ export type SendEmail_GetAllGroupsQueryVariables = Exact<{
 
 export type SendEmail_GetAllGroupsQuery = { readonly __typename?: 'query_root', readonly Group: ReadonlyArray<{ readonly __typename?: 'Group', readonly id: any, readonly enabled: boolean, readonly name: string }> };
 
+export type AddEventPeople_ContentGroupPersonFragment = { readonly __typename?: 'ContentGroupPerson', readonly id: any, readonly groupId: any, readonly personId: any, readonly roleName: string };
+
+export type AddEventPeople_ContentPersonFragment = { readonly __typename?: 'ContentPerson', readonly id: any, readonly name: string, readonly affiliation?: Maybe<string>, readonly email?: Maybe<string>, readonly attendeeId?: Maybe<any> };
+
+export type AddEventPeople_AttendeeFragment = { readonly __typename?: 'Attendee', readonly id: any, readonly displayName: string, readonly profile?: Maybe<{ readonly __typename?: 'AttendeeProfile', readonly attendeeId: any, readonly affiliation?: Maybe<string> }>, readonly invitation?: Maybe<{ readonly __typename?: 'Invitation', readonly id: any, readonly invitedEmailAddress: string }> };
+
+export type AddEventPeople_GroupFragment = { readonly __typename?: 'Group', readonly id: any, readonly name: string };
+
+export type AddEventPeople_SelectContentGroupPeopleQueryVariables = Exact<{
+  contentGroupIds: ReadonlyArray<Scalars['uuid']> | Scalars['uuid'];
+}>;
+
+
+export type AddEventPeople_SelectContentGroupPeopleQuery = { readonly __typename?: 'query_root', readonly ContentGroupPerson: ReadonlyArray<(
+    { readonly __typename?: 'ContentGroupPerson' }
+    & AddEventPeople_ContentGroupPersonFragment
+  )> };
+
+export type AddEventPeople_SelectContentPeopleQueryVariables = Exact<{
+  conferenceId: Scalars['uuid'];
+}>;
+
+
+export type AddEventPeople_SelectContentPeopleQuery = { readonly __typename?: 'query_root', readonly ContentPerson: ReadonlyArray<(
+    { readonly __typename?: 'ContentPerson' }
+    & AddEventPeople_ContentPersonFragment
+  )> };
+
+export type AddEventPeople_SelectAttendeesQueryVariables = Exact<{
+  conferenceId: Scalars['uuid'];
+}>;
+
+
+export type AddEventPeople_SelectAttendeesQuery = { readonly __typename?: 'query_root', readonly Attendee: ReadonlyArray<(
+    { readonly __typename?: 'Attendee' }
+    & AddEventPeople_AttendeeFragment
+  )> };
+
+export type AddEventPeople_SelectContentPeople_ByAttendeeQueryVariables = Exact<{
+  attendeeIds: ReadonlyArray<Scalars['uuid']> | Scalars['uuid'];
+}>;
+
+
+export type AddEventPeople_SelectContentPeople_ByAttendeeQuery = { readonly __typename?: 'query_root', readonly ContentPerson: ReadonlyArray<(
+    { readonly __typename?: 'ContentPerson' }
+    & AddEventPeople_ContentPersonFragment
+  )> };
+
+export type AddEventPeople_SelectGroupsQueryVariables = Exact<{
+  conferenceId: Scalars['uuid'];
+}>;
+
+
+export type AddEventPeople_SelectGroupsQuery = { readonly __typename?: 'query_root', readonly Group: ReadonlyArray<(
+    { readonly __typename?: 'Group' }
+    & AddEventPeople_GroupFragment
+  )> };
+
+export type AddEventPeople_SelectAttendees_ByGroupQueryVariables = Exact<{
+  groupId: Scalars['uuid'];
+}>;
+
+
+export type AddEventPeople_SelectAttendees_ByGroupQuery = { readonly __typename?: 'query_root', readonly Attendee: ReadonlyArray<(
+    { readonly __typename?: 'Attendee' }
+    & AddEventPeople_AttendeeFragment
+  )> };
+
+export type AddEventPeople_InsertContentPeopleMutationVariables = Exact<{
+  objects: ReadonlyArray<ContentPerson_Insert_Input> | ContentPerson_Insert_Input;
+}>;
+
+
+export type AddEventPeople_InsertContentPeopleMutation = { readonly __typename?: 'mutation_root', readonly insert_ContentPerson?: Maybe<{ readonly __typename?: 'ContentPerson_mutation_response', readonly returning: ReadonlyArray<(
+      { readonly __typename?: 'ContentPerson' }
+      & AddEventPeople_ContentPersonFragment
+    )> }> };
+
+export type AddEventPeople_InsertEventPeopleMutationVariables = Exact<{
+  objects: ReadonlyArray<EventPerson_Insert_Input> | EventPerson_Insert_Input;
+}>;
+
+
+export type AddEventPeople_InsertEventPeopleMutation = { readonly __typename?: 'mutation_root', readonly insert_EventPerson?: Maybe<{ readonly __typename?: 'EventPerson_mutation_response', readonly returning: ReadonlyArray<(
+      { readonly __typename?: 'EventPerson' }
+      & EventPersonInfoFragment
+    )> }> };
+
 export type InsertEventPersonMutationVariables = Exact<{
   newEventPerson: EventPerson_Insert_Input;
 }>;
@@ -33813,17 +33821,14 @@ export type DeleteEventPersonsMutationVariables = Exact<{
 
 export type DeleteEventPersonsMutation = { readonly __typename?: 'mutation_root', readonly delete_EventPerson?: Maybe<{ readonly __typename?: 'EventPerson_mutation_response', readonly returning: ReadonlyArray<{ readonly __typename?: 'EventPerson', readonly id: any }> }> };
 
-export type UpdateEventPersonInfoMutationVariables = Exact<{
+export type UpdateEventPersonMutationVariables = Exact<{
   id: Scalars['uuid'];
-  attendeeId?: Maybe<Scalars['uuid']>;
-  name: Scalars['String'];
-  affiliation?: Maybe<Scalars['String']>;
+  personId: Scalars['uuid'];
   roleName: EventPersonRole_Enum;
-  originatingDataId?: Maybe<Scalars['uuid']>;
 }>;
 
 
-export type UpdateEventPersonInfoMutation = { readonly __typename?: 'mutation_root', readonly update_EventPerson_by_pk?: Maybe<(
+export type UpdateEventPersonMutation = { readonly __typename?: 'mutation_root', readonly update_EventPerson_by_pk?: Maybe<(
     { readonly __typename?: 'EventPerson' }
     & EventPersonInfoFragment
   )> };
@@ -33846,11 +33851,9 @@ export type EventInfoFragment = { readonly __typename?: 'Event', readonly confer
     & EventTagInfoFragment
   )> };
 
-export type EventPersonInfoFragment = { readonly __typename?: 'EventPerson', readonly affiliation?: Maybe<string>, readonly attendeeId?: Maybe<any>, readonly conferenceId: any, readonly eventId: any, readonly id: any, readonly name: string, readonly originatingDataId?: Maybe<any>, readonly roleName: EventPersonRole_Enum, readonly attendee?: Maybe<{ readonly __typename?: 'Attendee', readonly id: any, readonly displayName: string, readonly userId?: Maybe<string> }> };
+export type EventPersonInfoFragment = { readonly __typename?: 'EventPerson', readonly id: any, readonly eventId: any, readonly roleName: EventPersonRole_Enum, readonly personId: any };
 
 export type EventTagInfoFragment = { readonly __typename?: 'EventTag', readonly eventId: any, readonly id: any, readonly tagId: any };
-
-export type AttendeeInfoFragment = { readonly __typename?: 'Attendee', readonly id: any, readonly displayName: string };
 
 export type SelectWholeScheduleQueryVariables = Exact<{
   conferenceId: Scalars['uuid'];
@@ -33872,9 +33875,9 @@ export type SelectWholeScheduleQuery = { readonly __typename?: 'query_root', rea
   )>, readonly ContentGroup: ReadonlyArray<(
     { readonly __typename?: 'ContentGroup' }
     & ContentGroupFullNestedInfoFragment
-  )>, readonly Attendee: ReadonlyArray<(
-    { readonly __typename?: 'Attendee' }
-    & AttendeeInfoFragment
+  )>, readonly ContentPerson: ReadonlyArray<(
+    { readonly __typename?: 'ContentPerson' }
+    & ContentPersonInfoFragment
   )> };
 
 export type InsertRoomsMutationVariables = Exact<{
@@ -33936,36 +33939,16 @@ export type UpdateEventMutationVariables = Exact<{
   contentGroupId?: Maybe<Scalars['uuid']>;
   newEventTags: ReadonlyArray<EventTag_Insert_Input> | EventTag_Insert_Input;
   deleteEventTagIds: ReadonlyArray<Scalars['uuid']> | Scalars['uuid'];
-  newEventPeople: ReadonlyArray<EventPerson_Insert_Input> | EventPerson_Insert_Input;
-  deleteEventPeopleIds: ReadonlyArray<Scalars['uuid']> | Scalars['uuid'];
 }>;
 
 
 export type UpdateEventMutation = { readonly __typename?: 'mutation_root', readonly insert_EventTag?: Maybe<{ readonly __typename?: 'EventTag_mutation_response', readonly returning: ReadonlyArray<(
       { readonly __typename?: 'EventTag' }
       & EventTagInfoFragment
-    )> }>, readonly insert_EventPerson?: Maybe<{ readonly __typename?: 'EventPerson_mutation_response', readonly returning: ReadonlyArray<(
-      { readonly __typename?: 'EventPerson' }
-      & EventPersonInfoFragment
     )> }>, readonly update_Event_by_pk?: Maybe<(
     { readonly __typename?: 'Event' }
     & EventInfoFragment
-  )>, readonly delete_EventTag?: Maybe<{ readonly __typename?: 'EventTag_mutation_response', readonly returning: ReadonlyArray<{ readonly __typename?: 'EventTag', readonly id: any }> }>, readonly delete_EventPerson?: Maybe<{ readonly __typename?: 'EventPerson_mutation_response', readonly returning: ReadonlyArray<{ readonly __typename?: 'EventPerson', readonly id: any }> }> };
-
-export type UpdateEventPersonMutationVariables = Exact<{
-  id: Scalars['uuid'];
-  attendeeId?: Maybe<Scalars['uuid']>;
-  name: Scalars['String'];
-  affiliation?: Maybe<Scalars['String']>;
-  roleName: EventPersonRole_Enum;
-  originatingDataId?: Maybe<Scalars['uuid']>;
-}>;
-
-
-export type UpdateEventPersonMutation = { readonly __typename?: 'mutation_root', readonly update_EventPerson_by_pk?: Maybe<(
-    { readonly __typename?: 'EventPerson' }
-    & EventPersonInfoFragment
-  )> };
+  )>, readonly delete_EventTag?: Maybe<{ readonly __typename?: 'EventTag_mutation_response', readonly returning: ReadonlyArray<{ readonly __typename?: 'EventTag', readonly id: any }> }> };
 
 export type UpdateShufflePeriodMutationVariables = Exact<{
   id: Scalars['uuid'];
@@ -34202,17 +34185,7 @@ export type ProtectedEchoQueryVariables = Exact<{
 
 export type ProtectedEchoQuery = { readonly __typename?: 'query_root', readonly protectedEcho?: Maybe<{ readonly __typename?: 'ProtectedEchoOutput', readonly message: string }> };
 
-export type UserEventRolesSubscriptionVariables = Exact<{
-  eventId: Scalars['uuid'];
-}>;
-
-
-export type UserEventRolesSubscription = { readonly __typename?: 'subscription_root', readonly Event_by_pk?: Maybe<{ readonly __typename?: 'Event', readonly eventPeople: ReadonlyArray<(
-      { readonly __typename?: 'EventPerson' }
-      & EventPersonDetailsFragment
-    )> }> };
-
-export type EventPersonDetailsFragment = { readonly __typename?: 'EventPerson', readonly id: any, readonly name: string, readonly roleName: EventPersonRole_Enum, readonly eventId: any, readonly attendeeId?: Maybe<any> };
+export type EventPersonDetailsFragment = { readonly __typename?: 'EventPerson', readonly id: any, readonly roleName: EventPersonRole_Enum, readonly eventId: any, readonly person: { readonly __typename?: 'ContentPerson', readonly id: any, readonly name: string, readonly affiliation?: Maybe<string>, readonly attendeeId?: Maybe<any>, readonly attendee?: Maybe<{ readonly __typename?: 'Attendee', readonly id: any, readonly userId?: Maybe<string>, readonly displayName: string, readonly profile?: Maybe<{ readonly __typename?: 'AttendeeProfile', readonly attendeeId: any, readonly affiliation?: Maybe<string> }> }> } };
 
 export type GetForceUserRefreshConfigQueryVariables = Exact<{
   conferenceId: Scalars['uuid'];
@@ -34695,15 +34668,6 @@ export const ContentGroupSummary_ContentGroupDataFragmentDoc = gql`
 }
     ${ContentItemDataFragmentDoc}
 ${ContentPersonDataFragmentDoc}`;
-export const Timeline_EventPersonFragmentDoc = gql`
-    fragment Timeline_EventPerson on EventPerson {
-  id
-  attendeeId
-  name
-  affiliation
-  roleName
-}
-    `;
 export const EventParticipantStreamDetailsFragmentDoc = gql`
     fragment EventParticipantStreamDetails on EventParticipantStream {
   id
@@ -34771,7 +34735,12 @@ export const Room_EventSummaryFragmentDoc = gql`
   }
   eventPeople {
     id
-    attendeeId
+    person {
+      id
+      name
+      affiliation
+      attendeeId
+    }
     roleName
   }
 }
@@ -34953,6 +34922,20 @@ export const ConferenceConfiguration_ConferenceConfigurationsFragmentDoc = gql`
   value
 }
     `;
+export const ManageContentPeople_AttendeeFragmentDoc = gql`
+    fragment ManageContentPeople_Attendee on Attendee {
+  id
+  displayName
+  invitation {
+    id
+    invitedEmailAddress
+  }
+  profile {
+    attendeeId
+    affiliation
+  }
+}
+    `;
 export const SubmissionRequestsModal_ConferenceConfigurationFragmentDoc = gql`
     fragment SubmissionRequestsModal_ConferenceConfiguration on ConferenceConfiguration {
   id
@@ -34969,6 +34952,7 @@ export const ContentPersonInfoFragmentDoc = gql`
   affiliation
   email
   originatingDataId
+  attendeeId
 }
     `;
 export const UploaderInfoFragmentDoc = gql`
@@ -35256,6 +35240,43 @@ export const ManageShufflePeriods_ShufflePeriodFragmentDoc = gql`
   }
 }
     `;
+export const AddEventPeople_ContentGroupPersonFragmentDoc = gql`
+    fragment AddEventPeople_ContentGroupPerson on ContentGroupPerson {
+  id
+  groupId
+  personId
+  roleName
+}
+    `;
+export const AddEventPeople_ContentPersonFragmentDoc = gql`
+    fragment AddEventPeople_ContentPerson on ContentPerson {
+  id
+  name
+  affiliation
+  email
+  attendeeId
+}
+    `;
+export const AddEventPeople_AttendeeFragmentDoc = gql`
+    fragment AddEventPeople_Attendee on Attendee {
+  id
+  displayName
+  profile {
+    attendeeId
+    affiliation
+  }
+  invitation {
+    id
+    invitedEmailAddress
+  }
+}
+    `;
+export const AddEventPeople_GroupFragmentDoc = gql`
+    fragment AddEventPeople_Group on Group {
+  id
+  name
+}
+    `;
 export const RoomParticipantInfoFragmentDoc = gql`
     fragment RoomParticipantInfo on RoomParticipant {
   attendeeId
@@ -35287,19 +35308,10 @@ export const RoomInfoFragmentDoc = gql`
 ${RoomParticipantInfoFragmentDoc}`;
 export const EventPersonInfoFragmentDoc = gql`
     fragment EventPersonInfo on EventPerson {
-  affiliation
-  attendeeId
-  attendee {
-    id
-    displayName
-    userId
-  }
-  conferenceId
-  eventId
   id
-  name
-  originatingDataId
+  eventId
   roleName
+  personId
 }
     `;
 export const EventTagInfoFragmentDoc = gql`
@@ -35331,12 +35343,6 @@ export const EventInfoFragmentDoc = gql`
 }
     ${EventPersonInfoFragmentDoc}
 ${EventTagInfoFragmentDoc}`;
-export const AttendeeInfoFragmentDoc = gql`
-    fragment AttendeeInfo on Attendee {
-  id
-  displayName
-}
-    `;
 export const EditableSponsorsTable_ContentGroupInfoFragmentDoc = gql`
     fragment EditableSponsorsTable_ContentGroupInfo on ContentGroup {
   id
@@ -35454,10 +35460,23 @@ export const RequiredItemFieldsFragmentDoc = gql`
 export const EventPersonDetailsFragmentDoc = gql`
     fragment EventPersonDetails on EventPerson {
   id
-  name
   roleName
   eventId
-  attendeeId
+  person {
+    id
+    name
+    affiliation
+    attendeeId
+    attendee {
+      id
+      userId
+      displayName
+      profile {
+        attendeeId
+        affiliation
+      }
+    }
+  }
 }
     `;
 export const MenuSchedule_EventFragmentDoc = gql`
@@ -37907,6 +37926,39 @@ export function useContentGroup_CreateRoomMutation(baseOptions?: Apollo.Mutation
 export type ContentGroup_CreateRoomMutationHookResult = ReturnType<typeof useContentGroup_CreateRoomMutation>;
 export type ContentGroup_CreateRoomMutationResult = Apollo.MutationResult<ContentGroup_CreateRoomMutation>;
 export type ContentGroup_CreateRoomMutationOptions = Apollo.BaseMutationOptions<ContentGroup_CreateRoomMutation, ContentGroup_CreateRoomMutationVariables>;
+export const ManageContentPeople_SelectAllAttendeesDocument = gql`
+    query ManageContentPeople_SelectAllAttendees($conferenceId: uuid!) {
+  Attendee(where: {conferenceId: {_eq: $conferenceId}}) {
+    ...ManageContentPeople_Attendee
+  }
+}
+    ${ManageContentPeople_AttendeeFragmentDoc}`;
+
+/**
+ * __useManageContentPeople_SelectAllAttendeesQuery__
+ *
+ * To run a query within a React component, call `useManageContentPeople_SelectAllAttendeesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useManageContentPeople_SelectAllAttendeesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useManageContentPeople_SelectAllAttendeesQuery({
+ *   variables: {
+ *      conferenceId: // value for 'conferenceId'
+ *   },
+ * });
+ */
+export function useManageContentPeople_SelectAllAttendeesQuery(baseOptions: Apollo.QueryHookOptions<ManageContentPeople_SelectAllAttendeesQuery, ManageContentPeople_SelectAllAttendeesQueryVariables>) {
+        return Apollo.useQuery<ManageContentPeople_SelectAllAttendeesQuery, ManageContentPeople_SelectAllAttendeesQueryVariables>(ManageContentPeople_SelectAllAttendeesDocument, baseOptions);
+      }
+export function useManageContentPeople_SelectAllAttendeesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ManageContentPeople_SelectAllAttendeesQuery, ManageContentPeople_SelectAllAttendeesQueryVariables>) {
+          return Apollo.useLazyQuery<ManageContentPeople_SelectAllAttendeesQuery, ManageContentPeople_SelectAllAttendeesQueryVariables>(ManageContentPeople_SelectAllAttendeesDocument, baseOptions);
+        }
+export type ManageContentPeople_SelectAllAttendeesQueryHookResult = ReturnType<typeof useManageContentPeople_SelectAllAttendeesQuery>;
+export type ManageContentPeople_SelectAllAttendeesLazyQueryHookResult = ReturnType<typeof useManageContentPeople_SelectAllAttendeesLazyQuery>;
+export type ManageContentPeople_SelectAllAttendeesQueryResult = Apollo.QueryResult<ManageContentPeople_SelectAllAttendeesQuery, ManageContentPeople_SelectAllAttendeesQueryVariables>;
 export const SubmissionRequestsModal_GetConferenceConfigurationsDocument = gql`
     query SubmissionRequestsModal_GetConferenceConfigurations($conferenceId: uuid!) {
   ConferenceConfiguration(where: {conferenceId: {_eq: $conferenceId}}) {
@@ -38643,10 +38695,10 @@ export type UpdateGroupHallwayMutationHookResult = ReturnType<typeof useUpdateGr
 export type UpdateGroupHallwayMutationResult = Apollo.MutationResult<UpdateGroupHallwayMutation>;
 export type UpdateGroupHallwayMutationOptions = Apollo.BaseMutationOptions<UpdateGroupHallwayMutation, UpdateGroupHallwayMutationVariables>;
 export const UpdatePersonDocument = gql`
-    mutation UpdatePerson($id: uuid!, $name: String!, $affiliation: String = null, $email: String = null, $originatingDataId: uuid = null) {
+    mutation UpdatePerson($id: uuid!, $name: String!, $affiliation: String = null, $email: String = null, $originatingDataId: uuid = null, $attendeeId: uuid = null) {
   update_ContentPerson_by_pk(
     pk_columns: {id: $id}
-    _set: {name: $name, affiliation: $affiliation, email: $email, originatingDataId: $originatingDataId}
+    _set: {name: $name, affiliation: $affiliation, email: $email, originatingDataId: $originatingDataId, attendeeId: $attendeeId}
   ) {
     ...ContentPersonInfo
   }
@@ -38672,6 +38724,7 @@ export type UpdatePersonMutationFn = Apollo.MutationFunction<UpdatePersonMutatio
  *      affiliation: // value for 'affiliation'
  *      email: // value for 'email'
  *      originatingDataId: // value for 'originatingDataId'
+ *      attendeeId: // value for 'attendeeId'
  *   },
  * });
  */
@@ -40395,6 +40448,272 @@ export function useSendEmail_GetAllGroupsLazyQuery(baseOptions?: Apollo.LazyQuer
 export type SendEmail_GetAllGroupsQueryHookResult = ReturnType<typeof useSendEmail_GetAllGroupsQuery>;
 export type SendEmail_GetAllGroupsLazyQueryHookResult = ReturnType<typeof useSendEmail_GetAllGroupsLazyQuery>;
 export type SendEmail_GetAllGroupsQueryResult = Apollo.QueryResult<SendEmail_GetAllGroupsQuery, SendEmail_GetAllGroupsQueryVariables>;
+export const AddEventPeople_SelectContentGroupPeopleDocument = gql`
+    query AddEventPeople_SelectContentGroupPeople($contentGroupIds: [uuid!]!) {
+  ContentGroupPerson(where: {groupId: {_in: $contentGroupIds}}) {
+    ...AddEventPeople_ContentGroupPerson
+  }
+}
+    ${AddEventPeople_ContentGroupPersonFragmentDoc}`;
+
+/**
+ * __useAddEventPeople_SelectContentGroupPeopleQuery__
+ *
+ * To run a query within a React component, call `useAddEventPeople_SelectContentGroupPeopleQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAddEventPeople_SelectContentGroupPeopleQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAddEventPeople_SelectContentGroupPeopleQuery({
+ *   variables: {
+ *      contentGroupIds: // value for 'contentGroupIds'
+ *   },
+ * });
+ */
+export function useAddEventPeople_SelectContentGroupPeopleQuery(baseOptions: Apollo.QueryHookOptions<AddEventPeople_SelectContentGroupPeopleQuery, AddEventPeople_SelectContentGroupPeopleQueryVariables>) {
+        return Apollo.useQuery<AddEventPeople_SelectContentGroupPeopleQuery, AddEventPeople_SelectContentGroupPeopleQueryVariables>(AddEventPeople_SelectContentGroupPeopleDocument, baseOptions);
+      }
+export function useAddEventPeople_SelectContentGroupPeopleLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AddEventPeople_SelectContentGroupPeopleQuery, AddEventPeople_SelectContentGroupPeopleQueryVariables>) {
+          return Apollo.useLazyQuery<AddEventPeople_SelectContentGroupPeopleQuery, AddEventPeople_SelectContentGroupPeopleQueryVariables>(AddEventPeople_SelectContentGroupPeopleDocument, baseOptions);
+        }
+export type AddEventPeople_SelectContentGroupPeopleQueryHookResult = ReturnType<typeof useAddEventPeople_SelectContentGroupPeopleQuery>;
+export type AddEventPeople_SelectContentGroupPeopleLazyQueryHookResult = ReturnType<typeof useAddEventPeople_SelectContentGroupPeopleLazyQuery>;
+export type AddEventPeople_SelectContentGroupPeopleQueryResult = Apollo.QueryResult<AddEventPeople_SelectContentGroupPeopleQuery, AddEventPeople_SelectContentGroupPeopleQueryVariables>;
+export const AddEventPeople_SelectContentPeopleDocument = gql`
+    query AddEventPeople_SelectContentPeople($conferenceId: uuid!) {
+  ContentPerson(where: {conferenceId: {_eq: $conferenceId}}) {
+    ...AddEventPeople_ContentPerson
+  }
+}
+    ${AddEventPeople_ContentPersonFragmentDoc}`;
+
+/**
+ * __useAddEventPeople_SelectContentPeopleQuery__
+ *
+ * To run a query within a React component, call `useAddEventPeople_SelectContentPeopleQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAddEventPeople_SelectContentPeopleQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAddEventPeople_SelectContentPeopleQuery({
+ *   variables: {
+ *      conferenceId: // value for 'conferenceId'
+ *   },
+ * });
+ */
+export function useAddEventPeople_SelectContentPeopleQuery(baseOptions: Apollo.QueryHookOptions<AddEventPeople_SelectContentPeopleQuery, AddEventPeople_SelectContentPeopleQueryVariables>) {
+        return Apollo.useQuery<AddEventPeople_SelectContentPeopleQuery, AddEventPeople_SelectContentPeopleQueryVariables>(AddEventPeople_SelectContentPeopleDocument, baseOptions);
+      }
+export function useAddEventPeople_SelectContentPeopleLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AddEventPeople_SelectContentPeopleQuery, AddEventPeople_SelectContentPeopleQueryVariables>) {
+          return Apollo.useLazyQuery<AddEventPeople_SelectContentPeopleQuery, AddEventPeople_SelectContentPeopleQueryVariables>(AddEventPeople_SelectContentPeopleDocument, baseOptions);
+        }
+export type AddEventPeople_SelectContentPeopleQueryHookResult = ReturnType<typeof useAddEventPeople_SelectContentPeopleQuery>;
+export type AddEventPeople_SelectContentPeopleLazyQueryHookResult = ReturnType<typeof useAddEventPeople_SelectContentPeopleLazyQuery>;
+export type AddEventPeople_SelectContentPeopleQueryResult = Apollo.QueryResult<AddEventPeople_SelectContentPeopleQuery, AddEventPeople_SelectContentPeopleQueryVariables>;
+export const AddEventPeople_SelectAttendeesDocument = gql`
+    query AddEventPeople_SelectAttendees($conferenceId: uuid!) {
+  Attendee(where: {conferenceId: {_eq: $conferenceId}}) {
+    ...AddEventPeople_Attendee
+  }
+}
+    ${AddEventPeople_AttendeeFragmentDoc}`;
+
+/**
+ * __useAddEventPeople_SelectAttendeesQuery__
+ *
+ * To run a query within a React component, call `useAddEventPeople_SelectAttendeesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAddEventPeople_SelectAttendeesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAddEventPeople_SelectAttendeesQuery({
+ *   variables: {
+ *      conferenceId: // value for 'conferenceId'
+ *   },
+ * });
+ */
+export function useAddEventPeople_SelectAttendeesQuery(baseOptions: Apollo.QueryHookOptions<AddEventPeople_SelectAttendeesQuery, AddEventPeople_SelectAttendeesQueryVariables>) {
+        return Apollo.useQuery<AddEventPeople_SelectAttendeesQuery, AddEventPeople_SelectAttendeesQueryVariables>(AddEventPeople_SelectAttendeesDocument, baseOptions);
+      }
+export function useAddEventPeople_SelectAttendeesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AddEventPeople_SelectAttendeesQuery, AddEventPeople_SelectAttendeesQueryVariables>) {
+          return Apollo.useLazyQuery<AddEventPeople_SelectAttendeesQuery, AddEventPeople_SelectAttendeesQueryVariables>(AddEventPeople_SelectAttendeesDocument, baseOptions);
+        }
+export type AddEventPeople_SelectAttendeesQueryHookResult = ReturnType<typeof useAddEventPeople_SelectAttendeesQuery>;
+export type AddEventPeople_SelectAttendeesLazyQueryHookResult = ReturnType<typeof useAddEventPeople_SelectAttendeesLazyQuery>;
+export type AddEventPeople_SelectAttendeesQueryResult = Apollo.QueryResult<AddEventPeople_SelectAttendeesQuery, AddEventPeople_SelectAttendeesQueryVariables>;
+export const AddEventPeople_SelectContentPeople_ByAttendeeDocument = gql`
+    query AddEventPeople_SelectContentPeople_ByAttendee($attendeeIds: [uuid!]!) {
+  ContentPerson(where: {attendeeId: {_in: $attendeeIds}}) {
+    ...AddEventPeople_ContentPerson
+  }
+}
+    ${AddEventPeople_ContentPersonFragmentDoc}`;
+
+/**
+ * __useAddEventPeople_SelectContentPeople_ByAttendeeQuery__
+ *
+ * To run a query within a React component, call `useAddEventPeople_SelectContentPeople_ByAttendeeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAddEventPeople_SelectContentPeople_ByAttendeeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAddEventPeople_SelectContentPeople_ByAttendeeQuery({
+ *   variables: {
+ *      attendeeIds: // value for 'attendeeIds'
+ *   },
+ * });
+ */
+export function useAddEventPeople_SelectContentPeople_ByAttendeeQuery(baseOptions: Apollo.QueryHookOptions<AddEventPeople_SelectContentPeople_ByAttendeeQuery, AddEventPeople_SelectContentPeople_ByAttendeeQueryVariables>) {
+        return Apollo.useQuery<AddEventPeople_SelectContentPeople_ByAttendeeQuery, AddEventPeople_SelectContentPeople_ByAttendeeQueryVariables>(AddEventPeople_SelectContentPeople_ByAttendeeDocument, baseOptions);
+      }
+export function useAddEventPeople_SelectContentPeople_ByAttendeeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AddEventPeople_SelectContentPeople_ByAttendeeQuery, AddEventPeople_SelectContentPeople_ByAttendeeQueryVariables>) {
+          return Apollo.useLazyQuery<AddEventPeople_SelectContentPeople_ByAttendeeQuery, AddEventPeople_SelectContentPeople_ByAttendeeQueryVariables>(AddEventPeople_SelectContentPeople_ByAttendeeDocument, baseOptions);
+        }
+export type AddEventPeople_SelectContentPeople_ByAttendeeQueryHookResult = ReturnType<typeof useAddEventPeople_SelectContentPeople_ByAttendeeQuery>;
+export type AddEventPeople_SelectContentPeople_ByAttendeeLazyQueryHookResult = ReturnType<typeof useAddEventPeople_SelectContentPeople_ByAttendeeLazyQuery>;
+export type AddEventPeople_SelectContentPeople_ByAttendeeQueryResult = Apollo.QueryResult<AddEventPeople_SelectContentPeople_ByAttendeeQuery, AddEventPeople_SelectContentPeople_ByAttendeeQueryVariables>;
+export const AddEventPeople_SelectGroupsDocument = gql`
+    query AddEventPeople_SelectGroups($conferenceId: uuid!) {
+  Group(where: {conferenceId: {_eq: $conferenceId}}) {
+    ...AddEventPeople_Group
+  }
+}
+    ${AddEventPeople_GroupFragmentDoc}`;
+
+/**
+ * __useAddEventPeople_SelectGroupsQuery__
+ *
+ * To run a query within a React component, call `useAddEventPeople_SelectGroupsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAddEventPeople_SelectGroupsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAddEventPeople_SelectGroupsQuery({
+ *   variables: {
+ *      conferenceId: // value for 'conferenceId'
+ *   },
+ * });
+ */
+export function useAddEventPeople_SelectGroupsQuery(baseOptions: Apollo.QueryHookOptions<AddEventPeople_SelectGroupsQuery, AddEventPeople_SelectGroupsQueryVariables>) {
+        return Apollo.useQuery<AddEventPeople_SelectGroupsQuery, AddEventPeople_SelectGroupsQueryVariables>(AddEventPeople_SelectGroupsDocument, baseOptions);
+      }
+export function useAddEventPeople_SelectGroupsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AddEventPeople_SelectGroupsQuery, AddEventPeople_SelectGroupsQueryVariables>) {
+          return Apollo.useLazyQuery<AddEventPeople_SelectGroupsQuery, AddEventPeople_SelectGroupsQueryVariables>(AddEventPeople_SelectGroupsDocument, baseOptions);
+        }
+export type AddEventPeople_SelectGroupsQueryHookResult = ReturnType<typeof useAddEventPeople_SelectGroupsQuery>;
+export type AddEventPeople_SelectGroupsLazyQueryHookResult = ReturnType<typeof useAddEventPeople_SelectGroupsLazyQuery>;
+export type AddEventPeople_SelectGroupsQueryResult = Apollo.QueryResult<AddEventPeople_SelectGroupsQuery, AddEventPeople_SelectGroupsQueryVariables>;
+export const AddEventPeople_SelectAttendees_ByGroupDocument = gql`
+    query AddEventPeople_SelectAttendees_ByGroup($groupId: uuid!) {
+  Attendee(where: {groupAttendees: {groupId: {_eq: $groupId}}}) {
+    ...AddEventPeople_Attendee
+  }
+}
+    ${AddEventPeople_AttendeeFragmentDoc}`;
+
+/**
+ * __useAddEventPeople_SelectAttendees_ByGroupQuery__
+ *
+ * To run a query within a React component, call `useAddEventPeople_SelectAttendees_ByGroupQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAddEventPeople_SelectAttendees_ByGroupQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAddEventPeople_SelectAttendees_ByGroupQuery({
+ *   variables: {
+ *      groupId: // value for 'groupId'
+ *   },
+ * });
+ */
+export function useAddEventPeople_SelectAttendees_ByGroupQuery(baseOptions: Apollo.QueryHookOptions<AddEventPeople_SelectAttendees_ByGroupQuery, AddEventPeople_SelectAttendees_ByGroupQueryVariables>) {
+        return Apollo.useQuery<AddEventPeople_SelectAttendees_ByGroupQuery, AddEventPeople_SelectAttendees_ByGroupQueryVariables>(AddEventPeople_SelectAttendees_ByGroupDocument, baseOptions);
+      }
+export function useAddEventPeople_SelectAttendees_ByGroupLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AddEventPeople_SelectAttendees_ByGroupQuery, AddEventPeople_SelectAttendees_ByGroupQueryVariables>) {
+          return Apollo.useLazyQuery<AddEventPeople_SelectAttendees_ByGroupQuery, AddEventPeople_SelectAttendees_ByGroupQueryVariables>(AddEventPeople_SelectAttendees_ByGroupDocument, baseOptions);
+        }
+export type AddEventPeople_SelectAttendees_ByGroupQueryHookResult = ReturnType<typeof useAddEventPeople_SelectAttendees_ByGroupQuery>;
+export type AddEventPeople_SelectAttendees_ByGroupLazyQueryHookResult = ReturnType<typeof useAddEventPeople_SelectAttendees_ByGroupLazyQuery>;
+export type AddEventPeople_SelectAttendees_ByGroupQueryResult = Apollo.QueryResult<AddEventPeople_SelectAttendees_ByGroupQuery, AddEventPeople_SelectAttendees_ByGroupQueryVariables>;
+export const AddEventPeople_InsertContentPeopleDocument = gql`
+    mutation AddEventPeople_InsertContentPeople($objects: [ContentPerson_insert_input!]!) {
+  insert_ContentPerson(objects: $objects) {
+    returning {
+      ...AddEventPeople_ContentPerson
+    }
+  }
+}
+    ${AddEventPeople_ContentPersonFragmentDoc}`;
+export type AddEventPeople_InsertContentPeopleMutationFn = Apollo.MutationFunction<AddEventPeople_InsertContentPeopleMutation, AddEventPeople_InsertContentPeopleMutationVariables>;
+
+/**
+ * __useAddEventPeople_InsertContentPeopleMutation__
+ *
+ * To run a mutation, you first call `useAddEventPeople_InsertContentPeopleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddEventPeople_InsertContentPeopleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addEventPeopleInsertContentPeopleMutation, { data, loading, error }] = useAddEventPeople_InsertContentPeopleMutation({
+ *   variables: {
+ *      objects: // value for 'objects'
+ *   },
+ * });
+ */
+export function useAddEventPeople_InsertContentPeopleMutation(baseOptions?: Apollo.MutationHookOptions<AddEventPeople_InsertContentPeopleMutation, AddEventPeople_InsertContentPeopleMutationVariables>) {
+        return Apollo.useMutation<AddEventPeople_InsertContentPeopleMutation, AddEventPeople_InsertContentPeopleMutationVariables>(AddEventPeople_InsertContentPeopleDocument, baseOptions);
+      }
+export type AddEventPeople_InsertContentPeopleMutationHookResult = ReturnType<typeof useAddEventPeople_InsertContentPeopleMutation>;
+export type AddEventPeople_InsertContentPeopleMutationResult = Apollo.MutationResult<AddEventPeople_InsertContentPeopleMutation>;
+export type AddEventPeople_InsertContentPeopleMutationOptions = Apollo.BaseMutationOptions<AddEventPeople_InsertContentPeopleMutation, AddEventPeople_InsertContentPeopleMutationVariables>;
+export const AddEventPeople_InsertEventPeopleDocument = gql`
+    mutation AddEventPeople_InsertEventPeople($objects: [EventPerson_insert_input!]!) {
+  insert_EventPerson(objects: $objects) {
+    returning {
+      ...EventPersonInfo
+    }
+  }
+}
+    ${EventPersonInfoFragmentDoc}`;
+export type AddEventPeople_InsertEventPeopleMutationFn = Apollo.MutationFunction<AddEventPeople_InsertEventPeopleMutation, AddEventPeople_InsertEventPeopleMutationVariables>;
+
+/**
+ * __useAddEventPeople_InsertEventPeopleMutation__
+ *
+ * To run a mutation, you first call `useAddEventPeople_InsertEventPeopleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddEventPeople_InsertEventPeopleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addEventPeopleInsertEventPeopleMutation, { data, loading, error }] = useAddEventPeople_InsertEventPeopleMutation({
+ *   variables: {
+ *      objects: // value for 'objects'
+ *   },
+ * });
+ */
+export function useAddEventPeople_InsertEventPeopleMutation(baseOptions?: Apollo.MutationHookOptions<AddEventPeople_InsertEventPeopleMutation, AddEventPeople_InsertEventPeopleMutationVariables>) {
+        return Apollo.useMutation<AddEventPeople_InsertEventPeopleMutation, AddEventPeople_InsertEventPeopleMutationVariables>(AddEventPeople_InsertEventPeopleDocument, baseOptions);
+      }
+export type AddEventPeople_InsertEventPeopleMutationHookResult = ReturnType<typeof useAddEventPeople_InsertEventPeopleMutation>;
+export type AddEventPeople_InsertEventPeopleMutationResult = Apollo.MutationResult<AddEventPeople_InsertEventPeopleMutation>;
+export type AddEventPeople_InsertEventPeopleMutationOptions = Apollo.BaseMutationOptions<AddEventPeople_InsertEventPeopleMutation, AddEventPeople_InsertEventPeopleMutationVariables>;
 export const InsertEventPersonDocument = gql`
     mutation InsertEventPerson($newEventPerson: EventPerson_insert_input!) {
   insert_EventPerson_one(object: $newEventPerson) {
@@ -40461,46 +40780,43 @@ export function useDeleteEventPersonsMutation(baseOptions?: Apollo.MutationHookO
 export type DeleteEventPersonsMutationHookResult = ReturnType<typeof useDeleteEventPersonsMutation>;
 export type DeleteEventPersonsMutationResult = Apollo.MutationResult<DeleteEventPersonsMutation>;
 export type DeleteEventPersonsMutationOptions = Apollo.BaseMutationOptions<DeleteEventPersonsMutation, DeleteEventPersonsMutationVariables>;
-export const UpdateEventPersonInfoDocument = gql`
-    mutation UpdateEventPersonInfo($id: uuid!, $attendeeId: uuid = null, $name: String!, $affiliation: String = null, $roleName: EventPersonRole_enum!, $originatingDataId: uuid = null) {
+export const UpdateEventPersonDocument = gql`
+    mutation UpdateEventPerson($id: uuid!, $personId: uuid!, $roleName: EventPersonRole_enum!) {
   update_EventPerson_by_pk(
     pk_columns: {id: $id}
-    _set: {attendeeId: $attendeeId, name: $name, affiliation: $affiliation, roleName: $roleName, originatingDataId: $originatingDataId}
+    _set: {personId: $personId, roleName: $roleName}
   ) {
     ...EventPersonInfo
   }
 }
     ${EventPersonInfoFragmentDoc}`;
-export type UpdateEventPersonInfoMutationFn = Apollo.MutationFunction<UpdateEventPersonInfoMutation, UpdateEventPersonInfoMutationVariables>;
+export type UpdateEventPersonMutationFn = Apollo.MutationFunction<UpdateEventPersonMutation, UpdateEventPersonMutationVariables>;
 
 /**
- * __useUpdateEventPersonInfoMutation__
+ * __useUpdateEventPersonMutation__
  *
- * To run a mutation, you first call `useUpdateEventPersonInfoMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateEventPersonInfoMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useUpdateEventPersonMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateEventPersonMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [updateEventPersonInfoMutation, { data, loading, error }] = useUpdateEventPersonInfoMutation({
+ * const [updateEventPersonMutation, { data, loading, error }] = useUpdateEventPersonMutation({
  *   variables: {
  *      id: // value for 'id'
- *      attendeeId: // value for 'attendeeId'
- *      name: // value for 'name'
- *      affiliation: // value for 'affiliation'
+ *      personId: // value for 'personId'
  *      roleName: // value for 'roleName'
- *      originatingDataId: // value for 'originatingDataId'
  *   },
  * });
  */
-export function useUpdateEventPersonInfoMutation(baseOptions?: Apollo.MutationHookOptions<UpdateEventPersonInfoMutation, UpdateEventPersonInfoMutationVariables>) {
-        return Apollo.useMutation<UpdateEventPersonInfoMutation, UpdateEventPersonInfoMutationVariables>(UpdateEventPersonInfoDocument, baseOptions);
+export function useUpdateEventPersonMutation(baseOptions?: Apollo.MutationHookOptions<UpdateEventPersonMutation, UpdateEventPersonMutationVariables>) {
+        return Apollo.useMutation<UpdateEventPersonMutation, UpdateEventPersonMutationVariables>(UpdateEventPersonDocument, baseOptions);
       }
-export type UpdateEventPersonInfoMutationHookResult = ReturnType<typeof useUpdateEventPersonInfoMutation>;
-export type UpdateEventPersonInfoMutationResult = Apollo.MutationResult<UpdateEventPersonInfoMutation>;
-export type UpdateEventPersonInfoMutationOptions = Apollo.BaseMutationOptions<UpdateEventPersonInfoMutation, UpdateEventPersonInfoMutationVariables>;
+export type UpdateEventPersonMutationHookResult = ReturnType<typeof useUpdateEventPersonMutation>;
+export type UpdateEventPersonMutationResult = Apollo.MutationResult<UpdateEventPersonMutation>;
+export type UpdateEventPersonMutationOptions = Apollo.BaseMutationOptions<UpdateEventPersonMutation, UpdateEventPersonMutationVariables>;
 export const SelectWholeScheduleDocument = gql`
     query SelectWholeSchedule($conferenceId: uuid!) {
   Room(where: {conferenceId: {_eq: $conferenceId}}) {
@@ -40521,8 +40837,8 @@ export const SelectWholeScheduleDocument = gql`
   ContentGroup(where: {conferenceId: {_eq: $conferenceId}}) {
     ...ContentGroupFullNestedInfo
   }
-  Attendee(where: {conferenceId: {_eq: $conferenceId}}) {
-    ...AttendeeInfo
+  ContentPerson(where: {conferenceId: {_eq: $conferenceId}}) {
+    ...ContentPersonInfo
   }
 }
     ${RoomInfoFragmentDoc}
@@ -40530,7 +40846,7 @@ ${EventInfoFragmentDoc}
 ${OriginatingDataInfoFragmentDoc}
 ${TagInfoFragmentDoc}
 ${ContentGroupFullNestedInfoFragmentDoc}
-${AttendeeInfoFragmentDoc}`;
+${ContentPersonInfoFragmentDoc}`;
 
 /**
  * __useSelectWholeScheduleQuery__
@@ -40731,15 +41047,10 @@ export type InsertEventMutationHookResult = ReturnType<typeof useInsertEventMuta
 export type InsertEventMutationResult = Apollo.MutationResult<InsertEventMutation>;
 export type InsertEventMutationOptions = Apollo.BaseMutationOptions<InsertEventMutation, InsertEventMutationVariables>;
 export const UpdateEventDocument = gql`
-    mutation UpdateEvent($eventId: uuid!, $roomId: uuid!, $intendedRoomModeName: RoomMode_enum!, $originatingDataId: uuid = null, $name: String!, $startTime: timestamptz!, $durationSeconds: Int!, $contentGroupId: uuid = null, $newEventTags: [EventTag_insert_input!]!, $deleteEventTagIds: [uuid!]!, $newEventPeople: [EventPerson_insert_input!]!, $deleteEventPeopleIds: [uuid!]!) {
+    mutation UpdateEvent($eventId: uuid!, $roomId: uuid!, $intendedRoomModeName: RoomMode_enum!, $originatingDataId: uuid = null, $name: String!, $startTime: timestamptz!, $durationSeconds: Int!, $contentGroupId: uuid = null, $newEventTags: [EventTag_insert_input!]!, $deleteEventTagIds: [uuid!]!) {
   insert_EventTag(objects: $newEventTags) {
     returning {
       ...EventTagInfo
-    }
-  }
-  insert_EventPerson(objects: $newEventPeople) {
-    returning {
-      ...EventPersonInfo
     }
   }
   update_Event_by_pk(
@@ -40753,14 +41064,8 @@ export const UpdateEventDocument = gql`
       id
     }
   }
-  delete_EventPerson(where: {id: {_in: $deleteEventPeopleIds}}) {
-    returning {
-      id
-    }
-  }
 }
     ${EventTagInfoFragmentDoc}
-${EventPersonInfoFragmentDoc}
 ${EventInfoFragmentDoc}`;
 export type UpdateEventMutationFn = Apollo.MutationFunction<UpdateEventMutation, UpdateEventMutationVariables>;
 
@@ -40787,8 +41092,6 @@ export type UpdateEventMutationFn = Apollo.MutationFunction<UpdateEventMutation,
  *      contentGroupId: // value for 'contentGroupId'
  *      newEventTags: // value for 'newEventTags'
  *      deleteEventTagIds: // value for 'deleteEventTagIds'
- *      newEventPeople: // value for 'newEventPeople'
- *      deleteEventPeopleIds: // value for 'deleteEventPeopleIds'
  *   },
  * });
  */
@@ -40798,46 +41101,6 @@ export function useUpdateEventMutation(baseOptions?: Apollo.MutationHookOptions<
 export type UpdateEventMutationHookResult = ReturnType<typeof useUpdateEventMutation>;
 export type UpdateEventMutationResult = Apollo.MutationResult<UpdateEventMutation>;
 export type UpdateEventMutationOptions = Apollo.BaseMutationOptions<UpdateEventMutation, UpdateEventMutationVariables>;
-export const UpdateEventPersonDocument = gql`
-    mutation UpdateEventPerson($id: uuid!, $attendeeId: uuid = null, $name: String!, $affiliation: String = null, $roleName: EventPersonRole_enum!, $originatingDataId: uuid = null) {
-  update_EventPerson_by_pk(
-    pk_columns: {id: $id}
-    _set: {attendeeId: $attendeeId, name: $name, affiliation: $affiliation, roleName: $roleName, originatingDataId: $originatingDataId}
-  ) {
-    ...EventPersonInfo
-  }
-}
-    ${EventPersonInfoFragmentDoc}`;
-export type UpdateEventPersonMutationFn = Apollo.MutationFunction<UpdateEventPersonMutation, UpdateEventPersonMutationVariables>;
-
-/**
- * __useUpdateEventPersonMutation__
- *
- * To run a mutation, you first call `useUpdateEventPersonMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateEventPersonMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateEventPersonMutation, { data, loading, error }] = useUpdateEventPersonMutation({
- *   variables: {
- *      id: // value for 'id'
- *      attendeeId: // value for 'attendeeId'
- *      name: // value for 'name'
- *      affiliation: // value for 'affiliation'
- *      roleName: // value for 'roleName'
- *      originatingDataId: // value for 'originatingDataId'
- *   },
- * });
- */
-export function useUpdateEventPersonMutation(baseOptions?: Apollo.MutationHookOptions<UpdateEventPersonMutation, UpdateEventPersonMutationVariables>) {
-        return Apollo.useMutation<UpdateEventPersonMutation, UpdateEventPersonMutationVariables>(UpdateEventPersonDocument, baseOptions);
-      }
-export type UpdateEventPersonMutationHookResult = ReturnType<typeof useUpdateEventPersonMutation>;
-export type UpdateEventPersonMutationResult = Apollo.MutationResult<UpdateEventPersonMutation>;
-export type UpdateEventPersonMutationOptions = Apollo.BaseMutationOptions<UpdateEventPersonMutation, UpdateEventPersonMutationVariables>;
 export const UpdateShufflePeriodDocument = gql`
     mutation UpdateShufflePeriod($id: uuid!, $object: room_ShufflePeriod_set_input!) {
   update_room_ShufflePeriod_by_pk(pk_columns: {id: $id}, _set: $object) {
@@ -41727,37 +41990,6 @@ export function useProtectedEchoLazyQuery(baseOptions?: Apollo.LazyQueryHookOpti
 export type ProtectedEchoQueryHookResult = ReturnType<typeof useProtectedEchoQuery>;
 export type ProtectedEchoLazyQueryHookResult = ReturnType<typeof useProtectedEchoLazyQuery>;
 export type ProtectedEchoQueryResult = Apollo.QueryResult<ProtectedEchoQuery, ProtectedEchoQueryVariables>;
-export const UserEventRolesDocument = gql`
-    subscription UserEventRoles($eventId: uuid!) {
-  Event_by_pk(id: $eventId) {
-    eventPeople {
-      ...EventPersonDetails
-    }
-  }
-}
-    ${EventPersonDetailsFragmentDoc}`;
-
-/**
- * __useUserEventRolesSubscription__
- *
- * To run a query within a React component, call `useUserEventRolesSubscription` and pass it any options that fit your needs.
- * When your component renders, `useUserEventRolesSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useUserEventRolesSubscription({
- *   variables: {
- *      eventId: // value for 'eventId'
- *   },
- * });
- */
-export function useUserEventRolesSubscription(baseOptions: Apollo.SubscriptionHookOptions<UserEventRolesSubscription, UserEventRolesSubscriptionVariables>) {
-        return Apollo.useSubscription<UserEventRolesSubscription, UserEventRolesSubscriptionVariables>(UserEventRolesDocument, baseOptions);
-      }
-export type UserEventRolesSubscriptionHookResult = ReturnType<typeof useUserEventRolesSubscription>;
-export type UserEventRolesSubscriptionResult = Apollo.SubscriptionResult<UserEventRolesSubscription>;
 export const GetForceUserRefreshConfigDocument = gql`
     query GetForceUserRefreshConfig($conferenceId: uuid!) {
   ConferenceConfiguration(
@@ -42037,7 +42269,7 @@ export type MenuScheduleQueryResult = Apollo.QueryResult<MenuScheduleQuery, Menu
 export const MenuSchedule_SearchEventsDocument = gql`
     query MenuSchedule_SearchEvents($conferenceId: uuid!, $search: String!) {
   Event(
-    where: {conferenceId: {_eq: $conferenceId}, room: {}, _or: [{name: {_ilike: $search}}, {contentGroup: {_or: [{title: {_ilike: $search}}, {people: {person: {_or: [{name: {_ilike: $search}}, {affiliation: {_ilike: $search}}]}}}]}}, {eventPeople: {attendee: {displayName: {_ilike: $search}}}}, {eventTags: {tag: {name: {_ilike: $search}}}}]}
+    where: {conferenceId: {_eq: $conferenceId}, room: {}, _or: [{name: {_ilike: $search}}, {contentGroup: {_or: [{title: {_ilike: $search}}, {people: {person: {_or: [{name: {_ilike: $search}}, {affiliation: {_ilike: $search}}]}}}]}}, {eventPeople: {person: {_or: [{name: {_ilike: $search}}, {affiliation: {_ilike: $search}}]}}}, {eventTags: {tag: {name: {_ilike: $search}}}}]}
     limit: 10
     order_by: {startTime: asc}
   ) {
