@@ -70,12 +70,6 @@ export class BabylonScene extends React.Component<BabylonSceneProps> {
         const box = MeshBuilder.CreateBox("box", { size: 5 }, this.scene);
         box.position = new Vector3(10, 1.5, 4);
 
-        const cylinder = MeshBuilder.CreateCylinder(
-            "cylinder",
-            { height: 5, diameterTop: 5, diameterBottom: 10 },
-            this.scene
-        );
-        cylinder.position = new Vector3(-10, 1.5, 4);
         const cylinder2 = MeshBuilder.CreateCylinder("cylinder", { height: 2 }, this.scene);
         cylinder2.position = new Vector3(2, 0, 4);
 
@@ -84,11 +78,11 @@ export class BabylonScene extends React.Component<BabylonSceneProps> {
 
         //Shadows for meshs and lights
         const directionalLightShadow = new ShadowGenerator(1024, directionalLight);
-        directionalLightShadow.getShadowMap()?.renderList?.push(sphere, box, cylinder, cylinder2, ico);
+        directionalLightShadow.getShadowMap()?.renderList?.push(sphere, box, cylinder2, ico);
         directionalLightShadow.useExponentialShadowMap = true;
 
         const spotLightShadow = new ShadowGenerator(1024, spotLight);
-        spotLightShadow.getShadowMap()?.renderList?.push(sphere, box, cylinder, cylinder2, ico);
+        spotLightShadow.getShadowMap()?.renderList?.push(sphere, box, cylinder2, ico);
         spotLightShadow.useExponentialShadowMap = true;
 
         groundPlane.receiveShadows = true;
@@ -104,6 +98,8 @@ export class BabylonScene extends React.Component<BabylonSceneProps> {
                 this.shootParticles(mesh);
             }
         });
+
+        //Video Test
 
         // Render Loop
         this.engine.runRenderLoop(() => {
@@ -121,6 +117,36 @@ export class BabylonScene extends React.Component<BabylonSceneProps> {
     onWindowResize = (event: any) => {
         this.engine?.resize();
     };
+
+    doVideo(video: HTMLVideoElement) {
+        // This is where you create and manipulate meshes
+        // const myPlane = BABYLON.MeshBuilder.CreatePlane("myPlane", { width: 5, height: 5 }, this.scene);
+        // myPlane.position = new Vector3(-8, 5, 4);
+
+        const myPlane = MeshBuilder.CreatePlane("myPlane", { width: 5, height: 5 }, this.scene);
+        myPlane.position = new Vector3(-10, 1.5, 4);
+
+        myPlane.rotate(BABYLON.Axis.X, Math.PI, BABYLON.Space.WORLD);
+
+        // // Video material
+        const videoMat = new BABYLON.StandardMaterial("textVid", this.scene);
+        const videoTexture = new BABYLON.VideoTexture("video", video, this.scene, true, true);
+
+        videoMat.backFaceCulling = false;
+        videoMat.diffuseTexture = videoTexture;
+        videoMat.emissiveColor = BABYLON.Color3.White();
+        myPlane.material = videoMat;
+
+        const htmlVideo = videoTexture.video;
+        htmlVideo.setAttribute("webkit-playsinline", "webkit-playsinline");
+        htmlVideo.setAttribute("playsinline", "true");
+        htmlVideo.setAttribute("muted", "true");
+        htmlVideo.setAttribute("autoplay", "true");
+
+        videoTexture.onLoadObservable.add(() => {
+            this.engine?.hideLoadingUI();
+        });
+    }
 
     shootParticles(mesh: AbstractMesh) {
         const particleSystem = new ParticleSystem("particles", 2000, this.scene);
@@ -164,6 +190,14 @@ export class BabylonScene extends React.Component<BabylonSceneProps> {
         const vis = this.props.show ? "visible" : "hidden";
         const w = this.props.show ? 1000 : 0;
         const h = this.props.show ? 500 : 0;
+
+        const video = document.querySelector("video") as HTMLVideoElement;
+        if (video) {
+            console.log("Doing Video!" + video);
+            this.doVideo(video);
+        } else {
+            console.log("No Video doing!");
+        }
 
         return (
             <canvas
